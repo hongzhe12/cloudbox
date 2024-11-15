@@ -54,17 +54,23 @@ def file_list_view(request):
     )
 
     if request.method == 'POST':
-        form = FileUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data['file']
+        # 获取所有上传的文件
+        files = request.FILES.getlist('file')
+        if not files:
+            messages.error(request, "没有文件上传！")
+            return redirect('cloud:file_list')
+
+        # 处理每个文件
+        for file in files:
             result = s3_client.put_file(file.name, file)
             if result:
-                messages.success(request, f"文件 '{file.name}' 已上传成功！")
-                cache.delete('file_list')  # 清除缓存，确保最新文件
+                messages.success(request, f"文件 '{file.name}' 上传成功！")
             else:
                 messages.error(request, f"文件 '{file.name}' 上传失败！")
-        else:
-            messages.error(request, "文件未选择或文件大小超出限制！")
+
+        # 清除缓存，确保文件列表最新
+        cache.delete('file_list')
+
         return redirect('cloud:file_list')
 
     else:
@@ -94,6 +100,9 @@ def file_list_view(request):
         'files': files,  # 分页后的文件列表
         'form': form
     })
+
+
+
 
 
 def search(request):
