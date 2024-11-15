@@ -7,6 +7,8 @@ from .models import S3Config
 from .s3client import S3Client
 from django.core.cache import cache
 
+import cProfile
+import pstats
 
 # 请将这些变量替换为你的实际值
 # ACCESS_KEY = 'iHlsYc77oCHdGTWwPF7I'
@@ -41,6 +43,10 @@ def configure_s3_view(request):
 
 
 def file_list_view(request):
+    # profiler = cProfile.Profile()
+    # profiler.enable()
+
+
     config = get_s3_config()
     if not config:
         messages.error(request, "S3 配置未设置！")
@@ -70,6 +76,7 @@ def file_list_view(request):
 
         # 清除缓存，确保文件列表最新
         cache.delete('file_list')
+        messages.info(request, "缓存已清除，文件列表将重新加载。")
 
         return redirect('cloud:file_list')
 
@@ -81,7 +88,7 @@ def file_list_view(request):
     if list_files is None:
         try:
             list_files = s3_client.list_files()
-            cache.set('file_list', list_files, timeout=300)
+            cache.set('file_list', list_files, timeout=300)  # 缓存文件列表 5 分钟
         except Exception as e:
             messages.error(request, f"获取文件列表失败：{e}")
             return redirect('cloud:file_list')
@@ -96,10 +103,19 @@ def file_list_view(request):
     except EmptyPage:
         files = paginator.page(paginator.num_pages)  # 如果页码超出范围，则显示最后一页
 
+    # profiler.disable()
+    #
+    # # 使用 pstats 处理并输出最耗时的函数
+    # stats = pstats.Stats(profiler)
+    # stats.strip_dirs()
+    # stats.sort_stats('cumtime')  # 按累计时间排序
+    # stats.print_stats(10)  # 输出前 10 个最耗时的函数
+
     return render(request, 'cloud/file_list.html', {
         'files': files,  # 分页后的文件列表
         'form': form
     })
+
 
 
 

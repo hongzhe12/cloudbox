@@ -10,7 +10,8 @@
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <style>
         .file-preview {
-            max-width: 100%; /* 图片预览自适应 */
+            max-width: 200px;
+            max-height: 200px;
             height: auto;
             object-fit: cover;
         }
@@ -72,13 +73,15 @@
 
     <!-- 文件列表表格 -->
     <div class="table-responsive">
-        <table class="table table-striped table-bordered">
+        <table class="table table-striped">
             <thead class="text-center" style="background-color: #f8f9fa; color: #343a40;">
             <tr>
                 <th scope="col">编号</th>
                 <th scope="col">文件名</th>
+                <th scope="col">预览</th>
                 <th scope="col">文件大小</th>
                 <th scope="col">操作</th>
+
             </tr>
             </thead>
             <tbody>
@@ -86,6 +89,22 @@
                 <tr>
                     <th scope="row" class="text-center">{{ forloop.counter }}</th>
                     <td>{{ file.name }}</td>
+                    <td>
+                        {% with file.name|slice:"-4:" as file_ext %}
+                            {% if file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' %}
+
+                                <img src="{{ file.url }}" class="file-preview" alt="预览图">
+                            {% elif file_ext == '.txt' %}
+                                <a href="{{ file.url }}" target="_blank" class="btn btn-info btn-sm">查看内容</a>
+                            {% elif file_ext == '.pdf' %}
+                                <a href="{{ file.url }}" target="_blank" class="btn btn-info btn-sm">查看PDF</a>
+                            {% elif file_ext == '.html' %}
+                                <a href="{{ file.url }}" target="_blank" class="btn btn-info btn-sm">查看HTML</a>
+                            {% else %}
+                                <span>无预览</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
                     <td class="text-center">{{ file.size }} KB</td>
                     <td class="text-center">
                         <!-- 操作按钮 -->
@@ -98,6 +117,8 @@
                             </form>
                         </div>
                     </td>
+
+
                 </tr>
             {% empty %}
                 <tr>
