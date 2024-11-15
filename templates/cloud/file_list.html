@@ -12,7 +12,6 @@
         .file-preview {
             max-width: 200px;
             max-height: 200px;
-            height: auto;
             object-fit: cover;
         }
 
@@ -76,24 +75,23 @@
         <table class="table table-striped">
             <thead class="text-center" style="background-color: #f8f9fa; color: #343a40;">
             <tr>
-                <th scope="col">编号</th>
-                <th scope="col">文件名</th>
-                <th scope="col">预览</th>
-                <th scope="col">文件大小</th>
-                <th scope="col">操作</th>
-
+                <th scope="col" class="align-middle">编号</th>
+                <th scope="col" class="align-middle">文件名</th>
+                <th scope="col" class="align-middle">预览</th>
+                <th scope="col" class="align-middle">文件大小</th>
+                <th scope="col" class="align-middle">操作</th>
             </tr>
             </thead>
             <tbody>
             {% for file in files %}
                 <tr>
-                    <th scope="row" class="text-center">{{ forloop.counter }}</th>
-                    <td>{{ file.name }}</td>
-                    <td>
+                    <th scope="row" class="text-center align-middle">{{ forloop.counter }}</th>
+                    <td class="text-center align-middle">
+                        {{ file.name|slice:":8" }}{% if file.name|length > 8 %}...{% endif %}</td>
+                    <td class="text-center align-middle">
                         {% with file.name|slice:"-4:" as file_ext %}
                             {% if file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' %}
-
-                                <img src="{{ file.url }}" class="file-preview" alt="预览图">
+                                <img src="{{ file.url }}" class="file-preview" alt="预览图" loading="lazy">
                             {% elif file_ext == '.txt' %}
                                 <a href="{{ file.url }}" target="_blank" class="btn btn-info btn-sm">查看内容</a>
                             {% elif file_ext == '.pdf' %}
@@ -105,8 +103,9 @@
                             {% endif %}
                         {% endwith %}
                     </td>
-                    <td class="text-center">{{ file.size }} KB</td>
-                    <td class="text-center">
+
+                    <td class="text-center align-middle">{{ file.size }} KB</td>
+                    <td class="text-center align-middle">
                         <!-- 操作按钮 -->
                         <div class="d-flex justify-content-center flex-wrap gap-1">
                             <a href="{{ file.url }}" class="btn btn-primary btn-sm" target="_blank">下载</a>
@@ -117,16 +116,15 @@
                             </form>
                         </div>
                     </td>
-
-
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center">没有找到文件</td>
+                    <td colspan="5" class="text-center align-middle">没有找到文件</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
+
     </div>
 
     <!-- 分页控件 -->

@@ -37,15 +37,25 @@ class S3Client:
         return cls._instance
 
     def __init__(self, access_key, secret_key, bucket_name, end_point=None, region='us-east-1'):
+        if not hasattr(self, 'initialized'):  # 检查是否已经初始化
+            self.access_key = access_key
+            self.secret_key = secret_key
+            self.end_point = end_point
+            self.region = region
+            self.bucket_name = bucket_name
+            self.s3 = self.init_s3(access_key, secret_key, end_point, region)
+            self.initialized = True  # 标记为已初始化
 
-        self.access_key = access_key
-        self.secret_key = secret_key
-        self.end_point = end_point
-        self.region = region
-        self.bucket_name = bucket_name
-        self.s3 = self.init_s3(access_key=access_key, secret_key=secret_key, end_point=end_point, region=region)
-
-    def init_s3(self, access_key=None, secret_key=None, end_point=None, region='us-east-1'):
+    @functools.lru_cache(None)  # 缓存 S3 客户端以避免重复创建
+    def init_s3(self, access_key, secret_key, end_point, region):
+        """
+        初始化 S3 客户端
+        :param access_key: AWS Access Key
+        :param secret_key: AWS Secret Key
+        :param end_point: Endpoint URL
+        :param region: AWS region
+        :return: S3 client
+        """
         return boto3.client(
             's3',
             aws_access_key_id=access_key,
@@ -54,8 +64,9 @@ class S3Client:
             region_name=region,
             endpoint_url=end_point,
             config=Config(
-                s3={"addressing_style": "path"},  # 对于许多 S3 兼容服务使用 path
-                retries={'max_attempts': 10, 'mode': 'standard'}
+                s3={"addressing_style": "path"},
+                retries={'max_attempts': 10, 'mode': 'standard'},
+                max_pool_connections=10  # 启用连接池
             )
         )
 
