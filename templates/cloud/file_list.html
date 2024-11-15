@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件列表</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <style>
         .file-preview {
@@ -42,6 +43,30 @@
             <button class="btn btn-outline-secondary" type="submit">搜索</button>
         </div>
     </form>
+
+    <!-- 显示 Django 消息 -->
+    {% if messages %}
+        <div class="alert alert-info">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- 上传文件表单 -->
+    <div class="mb-4">
+        <form action="{% url 'cloud:file_list' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="file" class="form-label">选择要上传的文件</label>
+                <input type="file" class="form-control" id="file" name="file" multiple required>
+            </div>
+            <div class="upload_btn">
+                <div></div>
+                <button type="submit" class="btn btn-primary">上传</button>
+            </div>
+        </form>
+    </div>
 
     <!-- 文件列表表格 -->
     <div class="table-responsive">
