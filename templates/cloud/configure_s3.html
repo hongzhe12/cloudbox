@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置 S3</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">配置 S3</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="{{ form.access_key.id_for_label }}" class="form-label">Access Key</label>
+                <input type="text" id="{{ form.access_key.id_for_label }}" name="access_key" class="form-control" value="{{ form.access_key.value }}">
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.secret_key.id_for_label }}" class="form-label">Secret Key</label>
+                <input type="password" id="{{ form.secret_key.id_for_label }}" name="secret_key" class="form-control" value="{{ form.secret_key.value }}">
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.bucket_name.id_for_label }}" class="form-label">Bucket Name</label>
+                <input type="text" id="{{ form.bucket_name.id_for_label }}" name="bucket_name" class="form-control" value="{{ form.bucket_name.value }}">
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.end_point.id_for_label }}" class="form-label">Endpoint URL</label>
+                <input type="url" id="{{ form.end_point.id_for_label }}" name="end_point" class="form-control" value="{{ form.end_point.value }}">
+            </div>
+            <button type="submit" class="btn btn-primary">保存配置</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
