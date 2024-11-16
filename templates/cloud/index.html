@@ -12,129 +12,200 @@
     <link href="{% static 'css/jquery.fancybox.min.css' %}" rel="stylesheet">
 </head>
 <body>
-    <!-- 顶部导航栏 -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container">
-            <a class="navbar-brand" href="#">美好时刻</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="切换导航">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{% url 'cloud:file_list' %}">首页</a>
-                    </li>
-                    <li class="nav-item">
-                        <!-- 搜索按钮，点击时弹出模态框 -->
-                        <button class="btn btn-outline-secondary nav-link" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
-                            搜索
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <!-- 上传文件按钮，点击时弹出模态框 -->
-                        <button class="btn btn-outline-secondary nav-link" type="button" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                            上传文件
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 搜索模态框 -->
-    <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="searchModalLabel">搜索文件</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="POST" action="{% url 'cloud:search' %}">
-                        {% csrf_token %}
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" name="keyword" placeholder="搜索文件" aria-label="搜索文件"
-                                   aria-describedby="button-addon2" id="search_file"/>
-                            <button class="btn btn-outline-secondary" type="submit">搜索</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+<!-- 顶部导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+        <a class="navbar-brand" href="#">美好时刻</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="切换导航">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="{% url 'cloud:file_list' %}">首页</a>
+                </li>
+                <li class="nav-item">
+                    <!-- 搜索按钮，点击时弹出模态框 -->
+                    <button class="btn btn-outline-secondary nav-link" type="button" data-bs-toggle="modal"
+                            data-bs-target="#searchModal">
+                        搜索
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <!-- 上传文件按钮，点击时弹出模态框 -->
+                    <button class="btn btn-outline-secondary nav-link" type="button" data-bs-toggle="modal"
+                            data-bs-target="#uploadModal">
+                        上传文件
+                    </button>
+                </li>
+            </ul>
         </div>
     </div>
+</nav>
 
-    <!-- 上传文件模态框 -->
-    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="uploadModalLabel">上传文件</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="{% url 'cloud:file_list' %}" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*" required>
-                        <button type="submit" class="btn btn-primary">上传文件</button>
-                    </form>
-                </div>
+<!-- 搜索模态框 -->
+<div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">搜索文件</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </div>
-    </div>
-
-    <div class="container mt-3">
-{#        <h1 class="mb-4 text-center">美好时刻</h1>#}
-
-        <!-- 美好时刻 -->
-        <div class="gallery-row">
-            {% for file in files %}
-                <div class="gallery-column">
-                    <div class="file-card">
-                        {% with file.name|slice:"-4:" as file_ext %}
-                            {% if file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' %}
-                                <!-- 使用 Fancybox 进行预览 -->
-                                <a href="{{ file.url }}" data-fancybox="gallery" data-caption="{{ file.name }}">
-                                    <img src="{{ file.url }}" alt="文件预览" class="img-fluid">
-                                </a>
-                            {% else %}
-                                <div class="file-card-body text-center">
-                                    <span>无预览</span>
-                                </div>
-                            {% endif %}
-                        {% endwith %}
-
-                        <div class="file-card-body">
-                            <div class="file-name">
-                                {{ file.name|slice:":5" }}{% if file.name|length > 5 %}...{% endif %}</div>
-                            <div class="file-size">{{ file.size }} KB</div>
-                        </div>
-                        <div class="file-actions">
-                            <a href="{{ file.url }}" target="_blank">下载</a>
-                            <form action="{% url 'cloud:delete_file' %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <input type="hidden" name="file_name" value="{{ file.name }}">
-                                <button type="submit" class="btn btn-danger btn-sm">删除</button>
-                            </form>
-                        </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'cloud:search' %}">
+                    {% csrf_token %}
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" name="keyword" placeholder="搜索文件"
+                               aria-label="搜索文件"
+                               aria-describedby="button-addon2" id="search_file"/>
+                        <button class="btn btn-outline-secondary" type="submit">搜索</button>
                     </div>
-                </div>
-            {% empty %}
-                <div class="col-12 text-center">
-                    <p>没有找到文件</p>
-                </div>
-            {% endfor %}
+                </form>
+            </div>
         </div>
+    </div>
+</div>
 
-        <!-- 分页控件 -->
-        {% include 'pagination.html' %}
+<!-- 上传文件模态框 -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">上传文件</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'cloud:file_list' %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*"
+                           required>
+                    <button type="submit" class="btn btn-primary">上传文件</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
+<div class="container mt-3">
+    {#        <h1 class="mb-4 text-center">美好时刻</h1>#}
+
+    <!-- 美好时刻 -->
+    <div class="gallery-row">
+    {% for file in files %}
+        <div class="gallery-column">
+            <div class="file-card">
+                {% with file.name|slice:"-4:" as file_ext %}
+                    {% if file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' %}
+                        <a href="{{ file.url }}" data-fancybox="gallery" data-caption="{{ file.name }}">
+                            <img src="{{ file.url }}" alt="文件预览" class="img-fluid">
+                        </a>
+                    {% else %}
+                        <div class="file-card-body text-center">
+                            <span>无预览</span>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <div class="file-card-body">
+                    <div class="file-name">
+                        {{ file.name|slice:":5" }}{% if file.name|length > 5 %}...{% endif %}
+                    </div>
+                    <div class="file-size">{{ file.size }} KB</div>
+                </div>
+                <div class="file-actions">
+                    <!-- 详情按钮，绑定文件数据 -->
+                    <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
+                            data-bs-target="#fileDetailModal"
+                            data-name="{{ file.name }}"
+                            data-size="{{ file.size }}"
+                            data-modified="{{ file.last_modified }}"
+                            data-etag="{{ file.etag }}"
+                            data-storage="{{ file.storage_class }}"
+                            data-url="{{ file.url }}">
+                        详情
+                    </button>
+
+                    <!-- 删除表单 -->
+                    <form action="{% url 'cloud:delete_file' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="file_name" value="{{ file.name }}">
+                        <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12 text-center">
+            <p>没有找到文件</p>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- 详情模态框 -->
+<div class="modal" id="fileDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">文件详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>文件名：</strong> <span id="modalFileName"></span></p>
+                <p><strong>文件大小：</strong> <span id="modalFileSize"></span> KB</p>
+                <p><strong>最后修改时间：</strong> <span id="modalFileModified"></span></p>
+                <p><strong>ETag：</strong> <span id="modalFileEtag"></span></p>
+                <p><strong>存储类别：</strong> <span id="modalFileStorage"></span></p>
+                <p>
+                    <strong>文件链接：</strong>
+                    <a id="modalFileUrl" href="#" target="_blank"></a>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+    <!-- 模态框 -->
+    <div class="modal fade" id="fileDetailModal" tabindex="-1" aria-labelledby="fileDetailModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fileDetailModalLabel">文件详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>文件名：</strong> <span id="modalFileName"></span></p>
+                    <p><strong>文件大小：</strong> <span id="modalFileSize"></span> KB</p>
+                    <p><strong>最后修改时间：</strong> <span id="modalFileModified"></span></p>
+                    <p><strong>ETag：</strong> <span id="modalFileEtag"></span></p>
+                    <p><strong>存储类别：</strong> <span id="modalFileStorage"></span></p>
+                    <p><strong>文件 URL：</strong> <a id="modalFileUrl" href="#" target="_blank">点击访问</a></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 引入 jQuery 和 Fancybox JS -->
-    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
-    <script src="{% static 'js/jquery.fancybox.min.js' %}"></script>
 
-    <!-- 引入 Bootstrap JavaScript -->
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <!-- 分页控件 -->
+    {% include 'pagination.html' %}
+
+</div>
+
+<!-- 引入 jQuery 和 Fancybox JS -->
+<script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'js/file_gallery.js' %}"></script>
+<script src="{% static 'js/jquery.fancybox.min.js' %}"></script>
+
+<!-- 引入 Bootstrap JavaScript -->
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

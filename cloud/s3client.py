@@ -126,12 +126,23 @@ class S3Client:
             for obj in response['Contents']:
                 file_key = obj['Key']
                 file_size = obj['Size'] // 1024  # 转换为KB单位
+                last_modified = obj['LastModified'].strftime("%Y-%m-%d %H:%M:%S")  # 格式化为字符串
+                etag = obj['ETag'].strip('"')  # 去掉引号
+                storage_class = obj['StorageClass']
                 file_url = s3.generate_presigned_url(
                     'get_object',
                     Params={'Bucket': bucket_name, 'Key': file_key},
                     ExpiresIn=3600  # 预签名 URL 的有效期，单位为秒
                 )
-                file_items.append({'size': file_size, 'url': file_url, 'name': file_key})
+                file_items.append({
+                    'name': file_key,  # 文件的完整路径名称（包括文件夹路径）
+                    'size': file_size,  # 文件大小，单位为 KB
+                    'last_modified': last_modified,  # 文件的最后修改时间，格式为字符串
+                    'etag': etag,  # 文件的 ETag，通常是 MD5 校验值（未启用多部分上传时）
+                    'storage_class': storage_class,  # 文件的存储类别（如 Standard、Glacier 等）
+                    'url': file_url  # 文件的预签名 URL，可用于直接访问或下载文件
+                })
+
         else:
             print("The bucket is empty or does not exist.")
 

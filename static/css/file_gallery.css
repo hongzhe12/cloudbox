@@ -45,7 +45,6 @@
 }
 
 /* 按钮样式 */
-.file-actions a,
 .file-actions button {
     background-color: rgba(0, 0, 0, 0.5);
     color: white;
@@ -54,6 +53,18 @@
     font-size: 12px;
     border-radius: 5px;
     cursor: pointer;
+}
+
+/* 下载按钮样式 */
+div.file-actions > a{
+     background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
 }
 
 /* 按钮 hover 状态 */

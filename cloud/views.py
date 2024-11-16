@@ -104,14 +104,14 @@ def file_list_view(request):
 
     # 分页处理
     page = request.GET.get('page', 1)  # 获取当前页码，默认为第 1 页
-    paginator = Paginator(list_files, 4)  # 每页显示 10 个文件
+    paginator = Paginator(list_files, 8)  # 每页显示 10 个文件
     try:
         files = paginator.page(page)
     except PageNotAnInteger:
         files = paginator.page(1)  # 如果页码不是整数，则显示第 1 页
     except EmptyPage:
         files = paginator.page(paginator.num_pages)  # 如果页码超出范围，则显示最后一页
-
+    print(files[0])
     return render(request, 'cloud/index.html', {
         'files': files,  # 分页后的文件列表
         'form': form
