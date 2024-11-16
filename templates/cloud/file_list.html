@@ -4,121 +4,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文件列表</title>
+    <title>文件画廊</title>
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
 
     <!-- 引入 Fancybox CSS -->
     <link href="{% static 'css/jquery.fancybox.min.css' %}" rel="stylesheet">
+
     <style>
-        .file-preview {
-            width: 100px;
-            height: 100px;
+        .file-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .file-card img {
+            width: 100%;
+            height: auto;
             object-fit: cover;
         }
 
-        .btn-sm {
-            font-size: 0.875rem;
+        .file-card-body {
+            padding: 10px;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .file-actions {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .file-actions a,
+        .file-actions button {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .file-actions a:hover,
+        .file-actions button:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .gallery-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        .gallery-column {
+            width: 30%;
+            margin-bottom: 20px;
+        }
+
+        .upload-btn-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .upload-btn-container button {
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
         }
 
         table {
-            word-wrap: break-word;
-            word-break: break-all;
-        }
-
-        .upload_btn {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: none;
         }
     </style>
 </head>
 <body>
 <div class="container mt-3">
-    <h1 class="mb-4 text-center">文件列表</h1>
+    <h1 class="mb-4 text-center">文件画廊</h1>
 
     <!-- 搜索框 -->
-    <form method="POST" action="{% url 'cloud:search' %}">
-        {% csrf_token %}
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" name="keyword" placeholder="搜索文件" aria-label="搜索文件"
-                   aria-describedby="button-addon2" id="search_file"/>
-            <button class="btn btn-outline-secondary" type="submit">搜索</button>
-        </div>
-    </form>
-
-    <!-- 显示 Django 消息 -->
-    {% if messages %}
-        <div class="alert alert-info">
-            {% for message in messages %}
-                <p>{{ message }}</p>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    <!-- 上传文件表单 -->
-    <div class="mb-4">
-        <form action="{% url 'cloud:file_list' %}" method="post" enctype="multipart/form-data">
+    <div class="search-container">
+        <form method="POST" action="{% url 'cloud:search' %}">
             {% csrf_token %}
-            <div class="mb-3">
-                <label for="file" class="form-label">选择要上传的文件</label>
-                <!-- 限制只能上传图片 -->
-                <input type="file" class="form-control" id="file" name="file" multiple accept="image/*" required>
-            </div>
-            <div class="upload_btn">
-                <div></div>
-                <button type="submit" class="btn btn-primary">上传</button>
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" name="keyword" placeholder="搜索文件" aria-label="搜索文件"
+                       aria-describedby="button-addon2" id="search_file"/>
+                <button class="btn btn-outline-secondary" type="submit">搜索</button>
             </div>
         </form>
     </div>
 
-    <!-- 文件列表表格 -->
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead class="text-center" style="background-color: #f8f9fa; color: #343a40;">
-            <tr>
-                <th scope="col" class="align-middle">编号</th>
-                <th scope="col" class="align-middle">文件名</th>
-                <th scope="col" class="align-middle">预览</th>
-                <th scope="col" class="align-middle">文件大小</th>
-                <th scope="col" class="align-middle">操作</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for file in files %}
-                <tr>
-                    <th scope="row" class="text-center align-middle">{{ forloop.counter }}</th>
-                    <td class="text-center align-middle">
-                        {{ file.name|slice:":5" }}{% if file.name|length > 5 %}...{% endif %}
-                    </td>
-                    <td class="text-center align-middle">
-                        {% with file.name|slice:"-4:" as file_ext %}
-                            {% if file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' %}
-                                <!-- 使用 Fancybox 进行预览 -->
-                                <a href="{{ file.url }}" data-fancybox="gallery" data-caption="{{ file.name }}">
-                                    <img src="{{ file.url }}" class="file-preview" alt="预览图" loading="lazy">
-                                </a>
-                            {% else %}
+    <!-- 上传文件表单 -->
+    <div class="upload-btn-container">
+        <form action="{% url 'cloud:file_list' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*" required>
+            <button type="submit" class="btn btn-primary">上传文件</button>
+        </form>
+    </div>
+
+    <!-- 文件画廊 -->
+    <div class="gallery-row">
+        {% for file in files %}
+            <div class="gallery-column">
+                <div class="file-card">
+                    {% with file.name|slice:"-4:" as file_ext %}
+                        {% if file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' %}
+                            <!-- 使用 Fancybox 进行预览 -->
+                            <a href="{{ file.url }}" data-fancybox="gallery" data-caption="{{ file.name }}">
+                                <img src="{{ file.url }}" alt="文件预览">
+                            </a>
+                        {% else %}
+                            <div class="file-card-body text-center">
                                 <span>无预览</span>
-                            {% endif %}
-                        {% endwith %}
-                    </td>
-                    <td class="text-center align-middle">{{ file.size }} KB</td>
-                    <td class="text-center align-middle">
-                        <a href="{{ file.url }}" class="btn btn-primary btn-sm" target="_blank">下载</a>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="file-card-body">
+                        <div class="file-name">
+                            {{ file.name|slice:":5" }}{% if file.name|length > 5 %}...{% endif %}</div>
+                        <div class="file-size">{{ file.size }} KB</div>
+                    </div>
+                    <div class="file-actions">
+                        <a href="{{ file.url }}" target="_blank">下载</a>
                         <form action="{% url 'cloud:delete_file' %}" method="post" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="file_name" value="{{ file.name }}">
                             <button type="submit" class="btn btn-danger btn-sm">删除</button>
                         </form>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center align-middle">没有找到文件</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center">
+                <p>没有找到文件</p>
+            </div>
+        {% endfor %}
     </div>
 
     <!-- 分页控件 -->
