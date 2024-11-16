@@ -25,12 +25,14 @@
                         <a class="nav-link active" aria-current="page" href="{% url 'cloud:file_list' %}">首页</a>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-outline-secondary nav-link" type="button" data-bs-toggle="collapse" data-bs-target="#searchForm" aria-expanded="false" aria-controls="searchForm">
+                        <!-- 搜索按钮，点击时弹出模态框 -->
+                        <button class="btn btn-outline-secondary nav-link" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
                             搜索
                         </button>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-outline-secondary nav-link" type="button" data-bs-toggle="collapse" data-bs-target="#uploadForm" aria-expanded="false" aria-controls="uploadForm">
+                        <!-- 上传文件按钮，点击时弹出模态框 -->
+                        <button class="btn btn-outline-secondary nav-link" type="button" data-bs-toggle="modal" data-bs-target="#uploadModal">
                             上传文件
                         </button>
                     </li>
@@ -39,33 +41,49 @@
         </div>
     </nav>
 
+    <!-- 搜索模态框 -->
+    <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="searchModalLabel">搜索文件</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{% url 'cloud:search' %}">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" name="keyword" placeholder="搜索文件" aria-label="搜索文件"
+                                   aria-describedby="button-addon2" id="search_file"/>
+                            <button class="btn btn-outline-secondary" type="submit">搜索</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上传文件模态框 -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel">上传文件</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{% url 'cloud:file_list' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*" required>
+                        <button type="submit" class="btn btn-primary">上传文件</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container mt-3">
         <h1 class="mb-4 text-center">文件画廊</h1>
-
-        <!-- 搜索框 -->
-        <div class="collapse mb-3" id="searchForm">
-            <div class="search-container">
-                <form method="POST" action="{% url 'cloud:search' %}">
-                    {% csrf_token %}
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" name="keyword" placeholder="搜索文件" aria-label="搜索文件"
-                               aria-describedby="button-addon2" id="search_file"/>
-                        <button class="btn btn-outline-secondary" type="submit">搜索</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 上传文件表单 -->
-        <div class="collapse mb-3" id="uploadForm">
-            <div class="upload-btn-container">
-                <form action="{% url 'cloud:file_list' %}" method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*" required>
-                    <button type="submit" class="btn btn-primary">上传文件</button>
-                </form>
-            </div>
-        </div>
 
         <!-- 文件画廊 -->
         <div class="gallery-row">
