@@ -92,82 +92,81 @@
 
     <!-- 美好时刻 -->
     <div class="gallery-row">
-    {% for file in files %}
-        <div class="gallery-column">
-            <div class="file-card">
-                {% with file.name|slice:"-4:" as file_ext %}
-                    {% if file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' %}
-                        <a href="{{ file.url }}" data-fancybox="gallery" data-caption="{{ file.name }}">
-                            <img src="{{ file.url }}" alt="文件预览" class="img-fluid">
-                        </a>
-                    {% else %}
-                        <div class="file-card-body text-center">
-                            <span>无预览</span>
+        {% for file in files %}
+            <div class="gallery-column">
+                <div class="file-card">
+                    {% with file.name|slice:"-4:" as file_ext %}
+                        {% if file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' %}
+                            <a href="{{ file.url }}" data-fancybox="gallery" data-caption="{{ file.name }}">
+                                <img src="{{ file.url }}" alt="文件预览" class="img-fluid">
+                            </a>
+                        {% else %}
+                            <div class="file-card-body text-center">
+                                <span>无预览</span>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="file-card-body">
+                        <div class="file-name">
+                            {{ file.name|slice:":5" }}{% if file.name|length > 5 %}...{% endif %}
                         </div>
-                    {% endif %}
-                {% endwith %}
-
-                <div class="file-card-body">
-                    <div class="file-name">
-                        {{ file.name|slice:":5" }}{% if file.name|length > 5 %}...{% endif %}
+                        <div class="file-size">{{ file.size }} KB</div>
                     </div>
-                    <div class="file-size">{{ file.size }} KB</div>
-                </div>
-                <div class="file-actions">
-                    <!-- 详情按钮，绑定文件数据 -->
-                    <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
-                            data-bs-target="#fileDetailModal"
-                            data-name="{{ file.name }}"
-                            data-size="{{ file.size }}"
-                            data-modified="{{ file.last_modified }}"
-                            data-etag="{{ file.etag }}"
-                            data-storage="{{ file.storage_class }}"
-                            data-url="{{ file.url }}">
-                        详情
-                    </button>
+                    <div class="file-actions">
+                        <!-- 详情按钮，绑定文件数据 -->
+                        <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#fileDetailModal"
+                                data-name="{{ file.name }}"
+                                data-size="{{ file.size }}"
+                                data-modified="{{ file.last_modified }}"
+                                data-etag="{{ file.etag }}"
+                                data-storage="{{ file.storage_class }}"
+                                data-url="{{ file.url }}">
+                            详情
+                        </button>
 
-                    <!-- 删除表单 -->
-                    <form action="{% url 'cloud:delete_file' %}" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="file_name" value="{{ file.name }}">
-                        <button type="submit" class="btn btn-danger btn-sm">删除</button>
-                    </form>
+                        <!-- 删除表单 -->
+                        <form action="{% url 'cloud:delete_file' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="file_name" value="{{ file.name }}">
+                            <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-    {% empty %}
-        <div class="col-12 text-center">
-            <p>没有找到文件</p>
-        </div>
-    {% endfor %}
-</div>
+        {% empty %}
+            <div class="col-12 text-center">
+                <p>没有找到文件</p>
+            </div>
+        {% endfor %}
+    </div>
 
-<!-- 详情模态框 -->
-<div class="modal" id="fileDetailModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">文件详情</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p><strong>文件名：</strong> <span id="modalFileName"></span></p>
-                <p><strong>文件大小：</strong> <span id="modalFileSize"></span> KB</p>
-                <p><strong>最后修改时间：</strong> <span id="modalFileModified"></span></p>
-                <p><strong>ETag：</strong> <span id="modalFileEtag"></span></p>
-                <p><strong>存储类别：</strong> <span id="modalFileStorage"></span></p>
-                <p>
-                    <strong>文件链接：</strong>
-                    <a id="modalFileUrl" href="#" target="_blank"></a>
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+    <!-- 详情模态框 -->
+    <div class="modal" id="fileDetailModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">文件详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>文件名：</strong> <span id="modalFileName"></span></p>
+                    <p><strong>文件大小：</strong> <span id="modalFileSize"></span> KB</p>
+                    <p><strong>最后修改时间：</strong> <span id="modalFileModified"></span></p>
+                    <p><strong>ETag：</strong> <span id="modalFileEtag"></span></p>
+                    <p><strong>存储类别：</strong> <span id="modalFileStorage"></span></p>
+                    <p>
+                        <strong>文件链接：</strong>
+                        <a id="modalFileUrl" href="#" target="_blank"></a>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
 
 
     <!-- 模态框 -->

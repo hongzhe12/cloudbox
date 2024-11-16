@@ -11,6 +11,8 @@ import io
 import cProfile
 import pstats
 
+REDIS_TIMEOUT = 60 * 60 * 72 # 缓存过期时间，72小时
+
 def compress_image(file, quality=70):
     img = Image.open(file)
     img = img.convert("RGB")  # 转换为 RGB 模式
@@ -65,8 +67,19 @@ def file_list_view(request):
         config.end_point
     )
 
+    # 获取文件列表并缓存
+    list_files = cache.get('file_list')
+    if list_files is None:
+        try:
+            list_files = s3_client.list_files()
+            # list_files数据格式：[{'size': file_size, 'url': file_url, 'name': file_key},...]
+            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)  # 缓存文件列表 1 小时
+        except Exception as e:
+            messages.error(request, f"获取文件列表失败：{e}")
+            return redirect('cloud:file_list')
+
+    # 上传文件后增量更新缓存
     if request.method == 'POST':
-        # 获取所有上传的文件
         files = request.FILES.getlist('file')
         if not files:
             messages.error(request, "没有文件上传！")
@@ -79,42 +92,28 @@ def file_list_view(request):
             result = s3_client.put_file(file.name, compressed_file)
             if result:
                 messages.success(request, f"文件 '{file.name}' 上传成功！")
+                new_file = s3_client.get_file_info_by_name(file.name)
+
+                # 上传成功后更新缓存
+                list_files.append(new_file)
+                cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)  # 60小时缓存
             else:
                 messages.error(request, f"文件 '{file.name}' 上传失败！")
 
-        # 清除缓存，确保文件列表最新
-        cache.delete('file_list')
-        messages.info(request, "缓存已清除，文件列表将重新加载。")
-
         return redirect('cloud:file_list')
 
-    else:
-        form = FileUploadForm()
-
-    # 获取文件列表并缓存
-    list_files = cache.get('file_list')
-    if list_files is None:
-        try:
-            list_files:[dict] = s3_client.list_files()
-            # list_files数据格式：[{'size': file_size, 'url': file_url, 'name': file_key},...]
-            cache.set('file_list', list_files, timeout=300)  # 缓存文件列表 5 分钟
-        except Exception as e:
-            messages.error(request, f"获取文件列表失败：{e}")
-            return redirect('cloud:file_list')
-
     # 分页处理
-    page = request.GET.get('page', 1)  # 获取当前页码，默认为第 1 页
-    paginator = Paginator(list_files, 8)  # 每页显示 10 个文件
+    page = request.GET.get('page', 1)
+    paginator = Paginator(list_files, 8)
     try:
         files = paginator.page(page)
     except PageNotAnInteger:
-        files = paginator.page(1)  # 如果页码不是整数，则显示第 1 页
+        files = paginator.page(1)
     except EmptyPage:
-        files = paginator.page(paginator.num_pages)  # 如果页码超出范围，则显示最后一页
-    print(files[0])
+        files = paginator.page(paginator.num_pages)
+
     return render(request, 'cloud/index.html', {
-        'files': files,  # 分页后的文件列表
-        'form': form
+        'files': files,
     })
 
 
@@ -162,8 +161,11 @@ def delete_file_view(request):
     result = s3_client.delete_file(file_name)
 
     if result:
-        # 清除缓存，以确保文件列表是最新的
-        cache.delete('file_list')
+        # 删除成功后从缓存中移除该文件
+        list_files = cache.get('file_list')
+        if list_files:
+            list_files = [f for f in list_files if f['name'] != file_name]
+            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
         messages.success(request, f"文件 '{file_name}' 已成功删除！")
     else:
         messages.error(request, f"删除文件 '{file_name}' 失败！")

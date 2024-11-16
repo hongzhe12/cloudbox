@@ -1,6 +1,8 @@
 import hashlib
 import functools
 
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+
 
 def catch_exceptions_decorator(func):
     @functools.wraps(func)
@@ -78,6 +80,44 @@ class S3Client:
             Bucket=bucket_name,
             Key=filename,
         )
+
+    def get_file_info_by_name(self, file_name):
+        """
+        按文件名查找文件，并返回文件信息字典
+        :param file_name: 文件名
+        :return: 文件信息字典（包含 'name', 'size', 'last_modified', 'etag', 'url' 等字段）
+        """
+        try:
+            # 列出桶内的文件
+            response = self.s3.list_objects_v2(Bucket=self.bucket_name, Prefix=file_name)
+            if 'Contents' not in response:
+                return None  # 如果没有文件匹配，返回 None
+
+            file_info = None
+            for file in response['Contents']:
+                if file['Key'] == file_name:
+                    # 如果找到匹配的文件，获取详细信息
+                    file_info = {
+                        'name': file['Key'],
+                        'size': file['Size'] // 1024,  # 转换为 KB
+                        'last_modified': file['LastModified'].strftime('%Y-%m-%d %H:%M:%S'),  # 格式化时间
+                        'etag': file['ETag'].strip('"'),  # 清除双引号
+                        'url': self.s3.generate_presigned_url(
+                            'get_object',
+                            Params={'Bucket': self.bucket_name, 'Key': file['Key']},
+                            ExpiresIn=3600  # 设置预签名 URL 过期时间（单位秒）
+                        )
+                    }
+                    break  # 找到后可以退出循环
+
+            return file_info
+
+        except (NoCredentialsError, PartialCredentialsError) as e:
+            print(f"S3 credentials error: {e}")
+            return None
+        except Exception as e:
+            print(f"Error fetching file info: {e}")
+            return None
 
     @catch_exceptions_decorator
     def put_file(self, filename, file):
