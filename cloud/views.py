@@ -38,7 +38,7 @@ def user_login(request):
             login(request, user)
             # 获取登录前的跳转地址，若没有提供，则跳转到主页
             next_url = request.GET.get('next', 'index')
-            messages.success(request, '登录成功!')
+
             return redirect(next_url)  # 登录成功后跳转到指定页面
         else:
             messages.error(request, '用户名或密码错误')
@@ -60,7 +60,7 @@ def configure_s3_view(request):
                 user=request.user,  # 更新或创建当前用户的配置
                 defaults=form.cleaned_data  # 使用表单数据更新配置
             )
-            messages.success(request, "S3 配置已保存成功！")
+
             return redirect('index')
     else:
         # GET 请求时，检查是否已有配置数据
@@ -110,7 +110,7 @@ def file_list_view(request):
             compressed_file = compress_image(file)
             result = s3_client.put_file(file.name, compressed_file)
             if result:
-                messages.success(request, f"文件 '{file.name}' 上传成功！")
+
                 new_file = s3_client.get_file_info_by_name(file.name)
 
                 # 上传成功后更新缓存
@@ -185,7 +185,7 @@ def delete_file_view(request):
         if list_files:
             list_files = [f for f in list_files if f['name'] != file_name]
             cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
-        messages.success(request, f"文件 '{file_name}' 已成功删除！")
+
     else:
         messages.error(request, f"删除文件 '{file_name}' 失败！")
 
