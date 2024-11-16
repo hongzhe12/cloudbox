@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件列表</title>
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+
     <!-- 引入 Fancybox CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.0/dist/jquery.fancybox.min.css" rel="stylesheet">
+    <link href="{% static 'css/jquery.fancybox.min.css' %}" rel="stylesheet">
     <style>
         .file-preview {
             width: 100px;
@@ -60,7 +61,8 @@
             {% csrf_token %}
             <div class="mb-3">
                 <label for="file" class="form-label">选择要上传的文件</label>
-                <input type="file" class="form-control" id="file" name="file" multiple required>
+                <!-- 限制只能上传图片 -->
+                <input type="file" class="form-control" id="file" name="file" multiple accept="image/*" required>
             </div>
             <div class="upload_btn">
                 <div></div>
@@ -73,13 +75,13 @@
     <div class="table-responsive">
         <table class="table table-striped">
             <thead class="text-center" style="background-color: #f8f9fa; color: #343a40;">
-                <tr>
-                    <th scope="col" class="align-middle">编号</th>
-                    <th scope="col" class="align-middle">文件名</th>
-                    <th scope="col" class="align-middle">预览</th>
-                    <th scope="col" class="align-middle">文件大小</th>
-                    <th scope="col" class="align-middle">操作</th>
-                </tr>
+            <tr>
+                <th scope="col" class="align-middle">编号</th>
+                <th scope="col" class="align-middle">文件名</th>
+                <th scope="col" class="align-middle">预览</th>
+                <th scope="col" class="align-middle">文件大小</th>
+                <th scope="col" class="align-middle">操作</th>
+            </tr>
             </thead>
             <tbody>
             {% for file in files %}
@@ -159,14 +161,14 @@
 </div>
 
 <!-- 引入 jQuery 和 Fancybox JS -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.0/dist/jquery.fancybox.min.js"></script>
+<script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'js/jquery.fancybox.min.js' %}"></script>
 
 <script>
     // 初始化 Fancybox
-    $(document).ready(function() {
+    $(document).ready(function () {
         $('[data-fancybox="gallery"]').fancybox({
-            buttons : [
+            buttons: [
                 'zoom',
                 'share',
                 'slideShow',
