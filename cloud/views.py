@@ -53,9 +53,6 @@ def configure_s3_view(request):
 
 
 def file_list_view(request):
-    # profiler = cProfile.Profile()
-    # profiler.enable()
-
     config = get_s3_config()
     if not config:
         messages.error(request, "S3 配置未设置！")
@@ -98,7 +95,8 @@ def file_list_view(request):
     list_files = cache.get('file_list')
     if list_files is None:
         try:
-            list_files = s3_client.list_files()
+            list_files:[dict] = s3_client.list_files()
+            # list_files数据格式：[{'size': file_size, 'url': file_url, 'name': file_key},...]
             cache.set('file_list', list_files, timeout=300)  # 缓存文件列表 5 分钟
         except Exception as e:
             messages.error(request, f"获取文件列表失败：{e}")
@@ -106,7 +104,7 @@ def file_list_view(request):
 
     # 分页处理
     page = request.GET.get('page', 1)  # 获取当前页码，默认为第 1 页
-    paginator = Paginator(list_files, 5)  # 每页显示 10 个文件
+    paginator = Paginator(list_files, 10)  # 每页显示 10 个文件
     try:
         files = paginator.page(page)
     except PageNotAnInteger:
@@ -114,15 +112,7 @@ def file_list_view(request):
     except EmptyPage:
         files = paginator.page(paginator.num_pages)  # 如果页码超出范围，则显示最后一页
 
-    # profiler.disable()
-    #
-    # # 使用 pstats 处理并输出最耗时的函数
-    # stats = pstats.Stats(profiler)
-    # stats.strip_dirs()
-    # stats.sort_stats('cumtime')  # 按累计时间排序
-    # stats.print_stats(10)  # 输出前 10 个最耗时的函数
-
-    return render(request, 'cloud/file_list.html', {
+    return render(request, 'cloud/index.html', {
         'files': files,  # 分页后的文件列表
         'form': form
     })
@@ -152,7 +142,7 @@ def search(request):
         messages.error(request, f"搜索失败：{e}")
         return redirect('cloud:file_list')
 
-    return render(request, 'cloud/file_list.html', {'files': list_files})
+    return render(request, 'cloud/index.html', {'files': list_files})
 
 
 def delete_file_view(request):
