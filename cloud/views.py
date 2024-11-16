@@ -26,7 +26,7 @@ def compress_image(file, quality=70):
 def user_login(request):
     # 如果用户已经登录，跳转到主页
     if request.user.is_authenticated:
-        return redirect('index')
+        return redirect('cloud:index')
 
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -61,7 +61,7 @@ def configure_s3_view(request):
                 defaults=form.cleaned_data  # 使用表单数据更新配置
             )
 
-            return redirect('index')
+            return redirect('cloud:index')
     else:
         # GET 请求时，检查是否已有配置数据
         config = get_s3_config(request)
@@ -95,14 +95,14 @@ def file_list_view(request):
             cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)  # 缓存文件列表 1 小时
         except Exception as e:
             messages.error(request, f"获取文件列表失败：{e}")
-            return redirect('index')
+            return redirect('cloud:index')
 
     # 上传文件后增量更新缓存
     if request.method == 'POST':
         files = request.FILES.getlist('file')
         if not files:
             messages.error(request, "没有文件上传！")
-            return redirect('index')
+            return redirect('cloud:index')
 
         # 处理每个文件
         for file in files:
@@ -119,7 +119,7 @@ def file_list_view(request):
             else:
                 messages.error(request, f"文件 '{file.name}' 上传失败！")
 
-        return redirect('index')
+        return redirect('cloud:index')
 
     # 分页处理
     page = request.GET.get('page', 1)
@@ -152,13 +152,13 @@ def search(request):
     keyword = request.POST.get('keyword')
     if not keyword:
         messages.error(request, "请输入搜索关键字！")
-        return redirect('index')
+        return redirect('cloud:index')
 
     try:
         list_files = s3_client.search_file(keyword)
     except Exception as e:
         messages.error(request, f"搜索失败：{e}")
-        return redirect('index')
+        return redirect('cloud:index')
 
     return render(request, 'cloud/index.html', {'files': list_files})
 
@@ -189,4 +189,4 @@ def delete_file_view(request):
     else:
         messages.error(request, f"删除文件 '{file_name}' 失败！")
 
-    return redirect('index')
+    return redirect('cloud:index')
