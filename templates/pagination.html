@@ -1,0 +1,39 @@
+<!-- 分页控件模板 -->
+<nav>
+    <ul class="pagination justify-content-center flex-wrap">
+        <!-- 上一页按钮 -->
+        {% if files.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ files.previous_page_number }}" aria-label="Previous">
+                    &laquo;
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&laquo;</span>
+            </li>
+        {% endif %}
+
+        <!-- 页码列表 -->
+        {% for num in files.paginator.page_range %}
+            {% if files.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        <!-- 下一页按钮 -->
+        {% if files.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ files.next_page_number }}" aria-label="Next">
+                    &raquo;
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&raquo;</span>
+            </li>
+        {% endif %}
+    </ul>
+</nav>

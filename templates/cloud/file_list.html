@@ -6,119 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件画廊</title>
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/file_gallery.css' %}" rel="stylesheet">
 
-    <!-- 引入 Fancybox CSS -->
+    <!-- 引入 Fancybox 的 CSS -->
     <link href="{% static 'css/jquery.fancybox.min.css' %}" rel="stylesheet">
-
-    <style>
-        .file-card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .file-card img {
-            width: 100%;
-            height: auto;
-            object-fit: cover;
-        }
-
-        .file-card-body {
-            padding: 10px;
-        }
-
-        .file-name {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .file-size {
-            font-size: 12px;
-            color: #888;
-        }
-
-        .file-actions {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .file-actions a,
-        .file-actions button {
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            font-size: 12px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .file-actions a:hover,
-        .file-actions button:hover {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-
-        .gallery-row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-        }
-
-        .gallery-column {
-            width: 30%;
-            margin-bottom: 20px;
-        }
-
-        .upload-btn-container {
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        .upload-btn-container button {
-            font-size: 16px;
-            padding: 10px 20px;
-        }
-
-        .search-container {
-            margin-bottom: 20px;
-        }
-
-        table {
-            display: none;
-        }
-    </style>
 </head>
 <body>
+<!-- 顶部导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+        <a class="navbar-brand" href="#">文件画廊</a>
+        <div class="ms-auto">
+            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#searchModal">搜索</button>
+            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#uploadModal">上传文件
+            </button>
+        </div>
+    </div>
+</nav>
+
 <div class="container mt-3">
     <h1 class="mb-4 text-center">文件画廊</h1>
-
-    <!-- 搜索框 -->
-    <div class="search-container">
-        <form method="POST" action="{% url 'cloud:search' %}">
-            {% csrf_token %}
-            <div class="input-group mb-3">
-                <input type="text" class="form-control" name="keyword" placeholder="搜索文件" aria-label="搜索文件"
-                       aria-describedby="button-addon2" id="search_file"/>
-                <button class="btn btn-outline-secondary" type="submit">搜索</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- 上传文件表单 -->
-    <div class="upload-btn-container">
-        <form action="{% url 'cloud:file_list' %}" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*" required>
-            <button type="submit" class="btn btn-primary">上传文件</button>
-        </form>
-    </div>
 
     <!-- 文件画廊 -->
     <div class="gallery-row">
@@ -127,9 +34,8 @@
                 <div class="file-card">
                     {% with file.name|slice:"-4:" as file_ext %}
                         {% if file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' %}
-                            <!-- 使用 Fancybox 进行预览 -->
                             <a href="{{ file.url }}" data-fancybox="gallery" data-caption="{{ file.name }}">
-                                <img src="{{ file.url }}" alt="文件预览">
+                                <img src="{{ file.url }}" alt="文件预览" class="img-fluid">
                             </a>
                         {% else %}
                             <div class="file-card-body text-center">
@@ -139,8 +45,7 @@
                     {% endwith %}
 
                     <div class="file-card-body">
-                        <div class="file-name">
-                            {{ file.name|slice:":5" }}{% if file.name|length > 5 %}...{% endif %}</div>
+                        <div class="file-name">{{ file.name }}</div>
                         <div class="file-size">{{ file.size }} KB</div>
                     </div>
                     <div class="file-actions">
@@ -159,68 +64,62 @@
             </div>
         {% endfor %}
     </div>
-
-    <!-- 分页控件 -->
-    <nav>
-        <ul class="pagination justify-content-center flex-wrap">
-            {% if files.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ files.previous_page_number }}" aria-label="Previous">
-                        &laquo;
-                    </a>
-                </li>
-            {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link">&laquo;</span>
-                </li>
-            {% endif %}
-
-            {% for num in files.paginator.page_range %}
-                {% if files.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% else %}
-                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                {% endif %}
-            {% endfor %}
-
-            {% if files.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ files.next_page_number }}" aria-label="Next">
-                        &raquo;
-                    </a>
-                </li>
-            {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link">&raquo;</span>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-
 </div>
+
+<!-- 搜索模态框 -->
+<div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">搜索文件</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'cloud:search' %}">
+                    {% csrf_token %}
+                    <input type="text" class="form-control" name="keyword" placeholder="搜索文件">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="submit" class="btn btn-primary">搜索</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 上传文件模态框 -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">上传文件</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'cloud:file_list' %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*"
+                           required>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="submit" class="btn btn-primary">上传文件</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 引入 分页组件 -->
+{% include 'pagination.html' %}
 
 <!-- 引入 jQuery 和 Fancybox JS -->
 <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
 <script src="{% static 'js/jquery.fancybox.min.js' %}"></script>
 
-<script>
-    // 初始化 Fancybox
-    $(document).ready(function () {
-        $('[data-fancybox="gallery"]').fancybox({
-            buttons: [
-                'zoom',
-                'share',
-                'slideShow',
-                'fullScreen',
-                'download',
-                'thumbs',
-                'close'
-            ],
-            loop: true,  // 允许循环查看图片
-            protect: true  // 禁止右键保存图片
-        });
-    });
-</script>
 
+<!-- 引入 Bootstrap JavaScript -->
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>
