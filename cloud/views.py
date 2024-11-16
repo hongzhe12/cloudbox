@@ -11,7 +11,7 @@ import io
 import cProfile
 import pstats
 
-def compress_image(file, quality=80):
+def compress_image(file, quality=70):
     img = Image.open(file)
     img = img.convert("RGB")  # 转换为 RGB 模式
     byte_io = io.BytesIO()
@@ -104,7 +104,7 @@ def file_list_view(request):
 
     # 分页处理
     page = request.GET.get('page', 1)  # 获取当前页码，默认为第 1 页
-    paginator = Paginator(list_files, 10)  # 每页显示 10 个文件
+    paginator = Paginator(list_files, 4)  # 每页显示 10 个文件
     try:
         files = paginator.page(page)
     except PageNotAnInteger:

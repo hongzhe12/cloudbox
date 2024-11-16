@@ -1,32 +1,40 @@
+/* 图片卡片样式 */
 .file-card {
     border: 1px solid #ddd;
     border-radius: 8px;
     overflow: hidden;
     position: relative;
     margin-bottom: 20px;
+    width: 100%; /* 让卡片宽度自适应父容器 */
+    aspect-ratio: 1; /* 设置固定的长宽比，保持正方形 */
 }
 
+/* 图片样式，确保图片填满卡片并保持比例 */
 .file-card img {
     width: 100%;
-    height: auto;
-    object-fit: cover;
+    height: 100%; /* 高度与宽度一致，确保图片为正方形 */
+    object-fit: cover;  /* 保持图片比例填满卡片 */
 }
 
+/* 文件卡片内容区 */
 .file-card-body {
     padding: 10px;
 }
 
+/* 文件名样式 */
 .file-name {
     font-size: 14px;
     font-weight: bold;
     margin-bottom: 10px;
 }
 
+/* 文件大小样式 */
 .file-size {
     font-size: 12px;
     color: #888;
 }
 
+/* 文件操作按钮 */
 .file-actions {
     position: absolute;
     bottom: 10px;
@@ -36,6 +44,7 @@
     justify-content: space-between;
 }
 
+/* 按钮样式 */
 .file-actions a,
 .file-actions button {
     background-color: rgba(0, 0, 0, 0.5);
@@ -47,36 +56,59 @@
     cursor: pointer;
 }
 
+/* 按钮 hover 状态 */
 .file-actions a:hover,
 .file-actions button:hover {
     background-color: rgba(0, 0, 0, 0.7);
 }
 
+/* 图片显示的网格布局 */
 .gallery-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-}
-
-.gallery-column {
-    width: 30%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);  /* 每行显示4个图片 */
+    gap: 20px;  /* 图片间距 */
     margin-bottom: 20px;
 }
 
+/* 单列卡片的布局，宽度自动适应 */
+.gallery-column {
+    width: 100%;
+}
+
+/* 上传按钮的容器样式 */
 .upload-btn-container {
     margin: 20px 0;
     text-align: center;
 }
 
+/* 上传按钮样式 */
 .upload-btn-container button {
     font-size: 16px;
     padding: 10px 20px;
 }
 
+/* 搜索框容器 */
 .search-container {
     margin-bottom: 20px;
 }
 
+/* 隐藏表格 */
 table {
     display: none;
+}
+
+/* 响应式设计：适配不同屏幕尺寸 */
+
+/* 在小屏幕上每行显示1个 */
+@media (max-width: 767px) {
+    .gallery-row {
+        grid-template-columns: 1fr;  /* 每行显示1个 */
+    }
+}
+
+/* 中等屏幕（如平板）每行显示2个 */
+@media (max-width: 1024px) {
+    .gallery-row {
+        grid-template-columns: repeat(2, 1fr);  /* 每行显示2个 */
+    }
 }
