@@ -145,3 +145,9 @@ CORS_ALLOW_ALL_ORIGINS = True  # 允许所有来源
 # CORS_ALLOWED_ORIGINS = [
 #     'http://localhost:5173',  # 允许来自该地址的请求
 # ]
+
+
+# settings.py
+LOGIN_URL = '/cloud/login/'  # 指定你自定义的登录页面 URL
+
+

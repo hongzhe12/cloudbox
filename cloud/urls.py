@@ -1,7 +1,8 @@
 # 编写urls.py文件，定义路由规则
 from django.urls import path
-from .views import file_list_view, delete_file_view, configure_s3_view, search
 
+from . import views
+from .views import file_list_view, delete_file_view, configure_s3_view, search, user_login
 
 from .api_views import (
     api_get_s3_config,
@@ -12,10 +13,10 @@ from .api_views import (
     api_delete_file
 )
 
-
 app_name = 'cloud'
 urlpatterns = [
-    path('files/', file_list_view, name='file_list'),
+    path('login/', user_login, name='login'),  # 用户登录的 URL 路由
+    path('index/', file_list_view, name='index'),
     path('delete_file/', delete_file_view, name='delete_file'),
     path('login_s3/', configure_s3_view, name='configure_s3'),
     path('search/', search, name='search'),
@@ -27,6 +28,5 @@ urlpatterns = [
     path('api/files/', api_list_files, name='api_list_files'),
     path('api/files/search/', api_search_files, name='api_search_files'),
     path('api/files/delete/', api_delete_file, name='api_delete_file'),
-
 
 ]
