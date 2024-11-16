@@ -31,6 +31,9 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
+    'drf_yasg',
+    'rest_framework',
     'cloud.apps.CloudConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -43,6 +46,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -133,3 +137,11 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+
+# 允许所有来源的跨域请求
+CORS_ALLOW_ALL_ORIGINS = True  # 允许所有来源
+
+# 或者，指定允许的来源
+# CORS_ALLOWED_ORIGINS = [
+#     'http://localhost:5173',  # 允许来自该地址的请求
+# ]

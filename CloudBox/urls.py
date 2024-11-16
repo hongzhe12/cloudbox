@@ -20,10 +20,31 @@ from django.conf.urls.static import static
 from django.conf import settings
 from django.urls import re_path
 from django.views.static import serve
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+# 创建 API 文档视图
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Cloud File Management API",  # API 文档的标题
+        default_version='v1',  # API 的默认版本
+        description="API documentation for cloud file management service",  # API 描述
+        terms_of_service="https://www.google.com/policies/terms/",  # 服务条款链接（可选）
+        contact=openapi.Contact(email="youremail@example.com"),  # 联系信息（可选）
+        license=openapi.License(name="MIT License"),  # 许可证（可选）
+    ),
+    public=True,  # 公共访问权限，默认为 True，表示文档是公开的
+    permission_classes=(permissions.AllowAny,),  # 设置谁可以访问该文档，这里表示任何人都可以访问
+)
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('cloud/', include('cloud.urls')),
-]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+                  path('admin/', admin.site.urls),
+                  path('cloud/', include('cloud.urls')),
+                  # 添加 API 文档的 URL 路由
+                  path('swagger/', schema_view.with_ui('swagger', cache_timeout=0),
+                       name='schema-swagger-ui'),  # Swagger UI
+              ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:
     urlpatterns += [

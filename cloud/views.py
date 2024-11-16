@@ -6,9 +6,19 @@ from .forms import S3ConfigForm, FileUploadForm
 from .models import S3Config
 from .s3client import S3Client
 from django.core.cache import cache
-
+from PIL import Image
+import io
 import cProfile
 import pstats
+
+def compress_image(file, quality=80):
+    img = Image.open(file)
+    img = img.convert("RGB")  # 转换为 RGB 模式
+    byte_io = io.BytesIO()
+    img.save(byte_io, 'WebP', quality=quality)  # 使用 WebP 格式
+    byte_io.seek(0)
+    return byte_io
+
 
 # 请将这些变量替换为你的实际值
 # ACCESS_KEY = 'iHlsYc77oCHdGTWwPF7I'
@@ -46,7 +56,6 @@ def file_list_view(request):
     # profiler = cProfile.Profile()
     # profiler.enable()
 
-
     config = get_s3_config()
     if not config:
         messages.error(request, "S3 配置未设置！")
@@ -68,7 +77,9 @@ def file_list_view(request):
 
         # 处理每个文件
         for file in files:
-            result = s3_client.put_file(file.name, file)
+            # 压缩图片
+            compressed_file = compress_image(file)
+            result = s3_client.put_file(file.name, compressed_file)
             if result:
                 messages.success(request, f"文件 '{file.name}' 上传成功！")
             else:
@@ -117,10 +128,6 @@ def file_list_view(request):
     })
 
 
-
-
-
-
 def search(request):
     config = get_s3_config()
     if not config:
@@ -138,7 +145,6 @@ def search(request):
     if not keyword:
         messages.error(request, "请输入搜索关键字！")
         return redirect('cloud:file_list')
-
 
     try:
         list_files = s3_client.search_file(keyword)
