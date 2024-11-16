@@ -109,6 +109,6 @@ table {
 /* 中等屏幕（如平板）每行显示2个 */
 @media (max-width: 1024px) {
     .gallery-row {
-        grid-template-columns: repeat(2, 1fr);  /* 每行显示2个 */
+        grid-template-columns: repeat(1, 1fr);  /* 每行显示2个 */
     }
 }
