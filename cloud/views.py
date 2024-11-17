@@ -9,7 +9,6 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.contrib import messages
-from django.http import JsonResponse
 
 from .tasks import upload_file_to_s3
 

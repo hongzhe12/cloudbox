@@ -68,6 +68,26 @@
 </div>
 
 <!-- 上传文件模态框 -->
+{#<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">#}
+{#    <div class="modal-dialog">#}
+{#        <div class="modal-content">#}
+{#            <div class="modal-header">#}
+{#                <h5 class="modal-title" id="uploadModalLabel">上传文件</h5>#}
+{#                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>#}
+{#            </div>#}
+{#            <div class="modal-body">#}
+{#                <form action="{% url 'cloud:index' %}" method="post" enctype="multipart/form-data">#}
+{#                    {% csrf_token %}#}
+{#                    <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*"#}
+{#                           required>#}
+{#                    <button type="submit" class="btn btn-primary">上传文件</button>#}
+{#                </form>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+
+<!-- 上传文件模态框 -->
 <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -76,12 +96,16 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="{% url 'cloud:index' %}" method="post" enctype="multipart/form-data">
+                <form id="uploadForm" action="{% url 'cloud:index' %}" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*"
-                           required>
-                    <button type="submit" class="btn btn-primary">上传文件</button>
+                    <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*" required>
+                    <button type="submit" id="uploadButton" class="btn btn-primary">上传文件</button>
                 </form>
+                <!-- 加载动画容器 -->
+                <div id="loadingContainer" style="display:none; text-align:center;">
+                    <div id="spinner"></div>
+                    <p>文件上传中...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -206,6 +230,12 @@
 <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
 <script src="{% static 'js/file_gallery.js' %}"></script>
 <script src="{% static 'js/jquery.fancybox.min.js' %}"></script>
+
+<!-- 引入 Spin.js 库 -->
+<script src="{% static 'js/spin.min.js' %}"></script>
+<script src="{% static 'js/custom_loading.js' %}"></script>
+<!-- 引入 详情加载数据库 -->
+<script src="{% static 'js/detail.js' %}"></script>
 
 <!-- 引入 Bootstrap JavaScript -->
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>

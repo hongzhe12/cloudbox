@@ -157,6 +157,7 @@ class S3Client:
 
     def list_files(self) -> list:
         """List all files in the specified S3 bucket."""
+        print("获取文件列表...")
         s3 = self.s3
         bucket_name = self.bucket_name
 
