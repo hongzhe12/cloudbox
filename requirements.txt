@@ -7,3 +7,5 @@ redis==5.2.0
 eventlet==0.37.0
 django-celery-beat==2.7.0
 django-celery-results==2.0.1
+pysnooper==1.2.1
+django-redis==5.4.0

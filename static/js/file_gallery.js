@@ -67,4 +67,42 @@ $(document).ready(function () {
 });
 
 
+// 获取表单和加载动画元素
+    const form = document.getElementById('uploadForm');
+    const loading = document.getElementById('loading');
+
+    // 提交表单时显示加载动画
+    form.addEventListener('submit', function (event) {
+        // 显示加载动画
+        loading.style.display = 'block';
+
+        // 防止默认表单提交行为，使用 AJAX 提交
+        event.preventDefault();
+
+        // 创建 FormData 对象
+        const formData = new FormData(form);
+
+        // 使用 AJAX 提交文件
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 上传完成后隐藏加载动画
+            loading.style.display = 'none';
+            // 可选：根据返回的数据进行处理，如显示成功信息等
+            if (data.success) {
+                alert("文件上传成功！");
+            } else {
+                alert("上传失败！");
+            }
+        })
+        .catch(error => {
+            loading.style.display = 'none';
+            console.error('Error uploading file:', error);
+            alert("上传失败！");
+        });
+    });
+
 

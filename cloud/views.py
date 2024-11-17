@@ -3,25 +3,54 @@ from .forms import S3ConfigForm
 from .models import S3Config
 from .s3client import S3Client
 from django.core.cache import cache
-from PIL import Image
-import io
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.http import JsonResponse
+
+from .tasks import upload_file_to_s3
 
 REDIS_TIMEOUT = 60 * 60 * 72 # 缓存过期时间，72小时
 
-def compress_image(file, quality=70):
-    img = Image.open(file)
-    img = img.convert("RGB")  # 转换为 RGB 模式
-    byte_io = io.BytesIO()
-    img.save(byte_io, 'WebP', quality=quality)  # 使用 WebP 格式
-    byte_io.seek(0)
-    return byte_io
 
+import cProfile
+import pstats
+from functools import wraps
+from io import StringIO
+
+
+def profile_view(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        profiler = cProfile.Profile()
+        profiler.enable()  # 启动性能分析
+
+        result = func(request, *args, **kwargs)  # 执行原始视图函数
+
+        profiler.disable()  # 停止性能分析
+
+        # 使用 pstats 处理并输出最耗时的函数
+        stats = pstats.Stats(profiler)
+        stats.strip_dirs()
+        stats.sort_stats('cumtime')  # 按累计时间排序
+
+        # 使用 StringIO 捕获输出
+        stats_output = StringIO()
+        stats.print_stats(10)  # 输出前 10 个最耗时的函数
+
+        # 将分析结果写入 StringIO
+        stats_output.seek(0)
+        output = stats_output.getvalue()
+
+        # 输出结果到控制台或日志
+        print(output)  # 你可以把它写到日志文件里
+
+        return result  # 返回原视图的结果
+
+    return wrapper
 
 def user_login(request):
     # 如果用户已经登录，跳转到主页
@@ -72,12 +101,14 @@ def configure_s3_view(request):
 
     return render(request, 'cloud/configure_s3.html', {'form': form})
 
-@login_required  # 确保用户已登录
-def file_list_view(request):
-    config = get_s3_config(request)  # 使用当前用户的配置
+@login_required
+@profile_view
+def list_view(request):
+
+    config = get_s3_config(request)
     if not config:
         messages.error(request, "S3 配置未设置！")
-        return redirect('cloud:configure_s3')  # 配置未设置时跳转到配置页面
+        return redirect('cloud:configure_s3')
 
     s3_client = S3Client(
         config.access_key,
@@ -86,42 +117,35 @@ def file_list_view(request):
         config.end_point
     )
 
-    # 获取文件列表并缓存
     list_files = cache.get('file_list')
     if list_files is None:
         try:
             list_files = s3_client.list_files()
-            # list_files数据格式：[{'size': file_size, 'url': file_url, 'name': file_key},...]
-            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)  # 缓存文件列表 1 小时
+            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
         except Exception as e:
             messages.error(request, f"获取文件列表失败：{e}")
             return redirect('cloud:index')
 
-    # 上传文件后增量更新缓存
     if request.method == 'POST':
         files = request.FILES.getlist('file')
         if not files:
             messages.error(request, "没有文件上传！")
             return redirect('cloud:index')
 
-        # 处理每个文件
         for file in files:
-            # 压缩图片
-            compressed_file = compress_image(file)
-            result = s3_client.put_file(file.name, compressed_file)
-            if result:
-
-                new_file = s3_client.get_file_info_by_name(file.name)
-
-                # 上传成功后更新缓存
-                list_files.append(new_file)
-                cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)  # 60小时缓存
-            else:
-                messages.error(request, f"文件 '{file.name}' 上传失败！")
+            # 异步调用 Celery 任务
+            upload_file_to_s3.delay(
+                file_name=file.name,
+                file_content=file.read(),
+                access_key=config.access_key,
+                secret_key=config.secret_key,
+                bucket_name=config.bucket_name,
+                end_point=config.end_point,
+            )
+            messages.success(request, f"文件 '{file.name}' 已提交上传！")
 
         return redirect('cloud:index')
 
-    # 分页处理
     page = request.GET.get('page', 1)
     paginator = Paginator(list_files, 8)
     try:
@@ -130,10 +154,13 @@ def file_list_view(request):
         files = paginator.page(1)
     except EmptyPage:
         files = paginator.page(paginator.num_pages)
+    return render(request, 'cloud/index.html', {'files': files})
 
-    return render(request, 'cloud/index.html', {
-        'files': files,
-    })
+
+
+
+
+
 
 @login_required  # 确保用户已登录
 def search(request):
@@ -159,6 +186,7 @@ def search(request):
     except Exception as e:
         messages.error(request, f"搜索失败：{e}")
         return redirect('cloud:index')
+
 
     return render(request, 'cloud/index.html', {'files': list_files})
 
