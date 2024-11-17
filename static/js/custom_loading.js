@@ -36,12 +36,25 @@ document.getElementById('uploadForm').onsubmit = function (event) {
         if (xhr.status === 200) {
             // 上传成功，隐藏加载动画
             document.getElementById('loadingContainer').style.display = 'none';
-            alert('文件上传成功');
-            location.reload();  // 刷新页面以更新文件列表
+            // 使用 SweetAlert2 显示上传成功提示
+            Swal.fire({
+                icon: 'success',
+                title: '文件上传成功',
+                text: '您的文件已经成功上传。',
+                confirmButtonText: '确定'
+            }).then(() => {
+                location.reload();  // 刷新页面以更新文件列表
+            });
         } else {
             // 上传失败，隐藏加载动画并显示错误消息
             document.getElementById('loadingContainer').style.display = 'none';
-            alert('文件上传失败，请重试');
+            // 使用 SweetAlert2 显示上传失败提示
+            Swal.fire({
+                icon: 'error',
+                title: '文件上传失败',
+                text: '请重试。',
+                confirmButtonText: '确定'
+            });
         }
     };
 
