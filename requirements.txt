@@ -10,3 +10,4 @@ django-celery-results==2.0.1
 pysnooper==1.2.1
 django-redis==5.4.0
 pillow==11.0.0
+uvicorn

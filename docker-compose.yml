@@ -11,11 +11,7 @@ services:
     depends_on:
       - redis
       - db
-    command: >
-      sh -c "python manage.py makemigrations &&
-             python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
-             python manage.py runserver 0.0.0.0:8000"
+    command: /bin/sh start.sh
 
   redis:
     image: redis:7-alpine
