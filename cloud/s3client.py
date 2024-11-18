@@ -173,7 +173,7 @@ class S3Client:
                 file_url = s3.generate_presigned_url(
                     'get_object',
                     Params={'Bucket': bucket_name, 'Key': file_key},
-                    ExpiresIn=3600  # 预签名 URL 的有效期，单位为秒
+                    ExpiresIn=60 * 60 * 72  # 预签名 URL 的有效期，单位为秒
                 )
                 file_items.append({
                     'name': file_key,  # 文件的完整路径名称（包括文件夹路径）

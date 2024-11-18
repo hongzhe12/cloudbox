@@ -12,7 +12,7 @@ from django.contrib import messages
 
 from .tasks import upload_file_to_s3
 
-REDIS_TIMEOUT = 60 * 60 * 72  # 缓存过期时间，72小时
+REDIS_TIMEOUT = 60 * 60 * 72  # 缓存过期时间，需与s3文件预签名 URL 的有效期保持一致
 
 import cProfile
 import pstats
