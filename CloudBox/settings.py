@@ -140,6 +140,7 @@ CACHES = {
 }
 
 
+
 # 允许所有来源的跨域请求
 CORS_ALLOW_ALL_ORIGINS = True  # 允许所有来源
 

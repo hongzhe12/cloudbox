@@ -12,8 +12,7 @@ from django.contrib import messages
 
 from .tasks import upload_file_to_s3
 
-REDIS_TIMEOUT = 60 * 60 * 72 # 缓存过期时间，72小时
-
+REDIS_TIMEOUT = 60 * 60 * 72  # 缓存过期时间，72小时
 
 import cProfile
 import pstats
@@ -51,6 +50,7 @@ def profile_view(func):
 
     return wrapper
 
+
 def user_login(request):
     # 如果用户已经登录，跳转到主页
     if request.user.is_authenticated:
@@ -73,11 +73,13 @@ def user_login(request):
 
     return render(request, 'cloud/login.html')  # 渲染登录页面
 
+
 def get_s3_config(request):
     try:
         return request.user.s3_config  # 获取当前用户的 S3 配置
     except S3Config.DoesNotExist:
         return None
+
 
 @login_required  # 确保用户已登录
 def configure_s3_view(request):
@@ -100,10 +102,9 @@ def configure_s3_view(request):
 
     return render(request, 'cloud/configure_s3.html', {'form': form})
 
-@login_required
-@profile_view
-def list_view(request):
 
+@login_required
+def list_view(request):
     config = get_s3_config(request)
     if not config:
         messages.error(request, "S3 配置未设置！")
@@ -156,11 +157,6 @@ def list_view(request):
     return render(request, 'cloud/index.html', {'files': files})
 
 
-
-
-
-
-
 @login_required  # 确保用户已登录
 def search(request):
     config = get_s3_config(request)  # 使用当前用户的配置
@@ -186,8 +182,8 @@ def search(request):
         messages.error(request, f"搜索失败：{e}")
         return redirect('cloud:index')
 
-
     return render(request, 'cloud/index.html', {'files': list_files})
+
 
 @login_required  # 确保用户已登录
 def delete_file_view(request):
