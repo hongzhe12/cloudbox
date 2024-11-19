@@ -2,6 +2,7 @@ import hashlib
 import functools
 
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from .conf import REDIS_TIMEOUT
 
 
 def catch_exceptions_decorator(func):
@@ -105,7 +106,7 @@ class S3Client:
                         'url': self.s3.generate_presigned_url(
                             'get_object',
                             Params={'Bucket': self.bucket_name, 'Key': file['Key']},
-                            ExpiresIn=3600  # 设置预签名 URL 过期时间（单位秒）
+                            ExpiresIn=REDIS_TIMEOUT  # 设置预签名 URL 过期时间（单位秒）
                         )
                     }
                     break  # 找到后可以退出循环
@@ -173,7 +174,7 @@ class S3Client:
                 file_url = s3.generate_presigned_url(
                     'get_object',
                     Params={'Bucket': bucket_name, 'Key': file_key},
-                    ExpiresIn=3600  # 预签名 URL 的有效期，单位为秒
+                    ExpiresIn=REDIS_TIMEOUT  # 预签名 URL 的有效期，单位为秒
                 )
                 file_items.append({
                     'name': file_key,  # 文件的完整路径名称（包括文件夹路径）
@@ -316,7 +317,7 @@ class S3Client:
                     file_url = s3.generate_presigned_url(
                         'get_object',
                         Params={'Bucket': bucket_name, 'Key': file_key},
-                        ExpiresIn=3600  # 预签名 URL 的有效期，单位为秒
+                        ExpiresIn=REDIS_TIMEOUT  # 预签名 URL 的有效期，单位为秒
                     )
                     file_items.append({'size': file_size, 'url': file_url, 'name': file_key})
         else:

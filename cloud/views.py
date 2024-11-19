@@ -1,9 +1,11 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+
+from .conf import REDIS_TIMEOUT
 from .forms import S3ConfigForm
 from .models import S3Config
 from .s3client import S3Client
 from django.core.cache import cache
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render
 
 from django.contrib.auth.decorators import login_required
@@ -12,7 +14,7 @@ from django.contrib import messages
 
 from .tasks import upload_file_to_s3
 
-REDIS_TIMEOUT = 60 * 60 * 72  # 缓存过期时间，72小时
+
 
 import cProfile
 import pstats
@@ -73,6 +75,10 @@ def user_login(request):
 
     return render(request, 'cloud/login.html')  # 渲染登录页面
 
+# 用户登出
+def user_logout(request):
+    logout(request)
+    return redirect("cloud:login")
 
 def get_s3_config(request):
     try:
