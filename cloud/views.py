@@ -66,10 +66,8 @@ def user_login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            # 获取登录前的跳转地址，若没有提供，则跳转到主页
-            next_url = request.GET.get('next', 'index')
 
-            return redirect(next_url)  # 登录成功后跳转到指定页面
+            return redirect("cloud:index")  # 登录成功后跳转到指定页面
         else:
             messages.error(request, '用户名或密码错误')
 

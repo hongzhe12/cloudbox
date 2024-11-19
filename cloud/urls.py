@@ -15,9 +15,9 @@ from .api_views import (
 
 app_name = 'cloud'
 urlpatterns = [
+    path('index/', list_view, name='index'),  # 首页的 URL 路由
     path('login/', user_login, name='login'),  # 用户登录的 URL 路由
     path('logout/', user_logout, name='logout'),  # 用户登出
-    path('index/', list_view, name='index'), # 首页的 URL 路由
     path('delete_file/', delete_file_view, name='delete_file'),
     path('login_s3/', configure_s3_view, name='configure_s3'),
     path('search/', search, name='search'),
