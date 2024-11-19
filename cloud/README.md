@@ -1,3 +1,33 @@
+# 测试步骤
+
+### 测试redis连通
+
+```bash
+docker exec -it cloudbox-web bash
+python manage.py shell
+```
+
+在 Django Shell 中：
+
+```python
+from django.core.cache import cache
+cache.set('test_key', 'test_value', timeout=60)
+print(cache.get('test_key'))  # 应该输出 'test_value'
+```
+
+
+### 创建管理员账户
+```bash
+docker compose exec -uroot web python manage.py createsuperuser
+```
+
+
+### 初始化模型
+```bash
+docker compose exec -uroot web python manage.py makemigrations cloud
+docker compose exec -uroot web python manage.py migrate cloud
+```
+
 ### 启动celery
 ```bash
 celery -A CloudBox.celery_app worker --loglevel=info
@@ -19,7 +49,7 @@ celery -A CloudBox.celery_app worker --loglevel=DEBUG
 你可以使用 Django 的 `shell` 命令进入 Django 的 Python 环境，并手动清除缓存。比如清除 `file_list` 缓存：
 
 ```bash
-python manage.py shell
+docker compose exec -uroot web python manage.py shell
 ```
 
 进入 Django shell 后：

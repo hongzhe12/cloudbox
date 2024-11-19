@@ -43,6 +43,17 @@
                         上传文件
                     </button>
                 </li>
+
+                <li class="nav-item">
+                    <!-- 用户退出登录按钮 -->
+                    <form method="post" action="{% url 'cloud:logout' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger nav-link">
+                            退出登录
+                        </button>
+                    </form>
+                </li>
+
             </ul>
         </div>
     </div>
@@ -70,26 +81,6 @@
         </div>
     </div>
 </div>
-
-<!-- 上传文件模态框 -->
-{#<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">#}
-{#    <div class="modal-dialog">#}
-{#        <div class="modal-content">#}
-{#            <div class="modal-header">#}
-{#                <h5 class="modal-title" id="uploadModalLabel">上传文件</h5>#}
-{#                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>#}
-{#            </div>#}
-{#            <div class="modal-body">#}
-{#                <form action="{% url 'cloud:index' %}" method="post" enctype="multipart/form-data">#}
-{#                    {% csrf_token %}#}
-{#                    <input type="file" class="form-control mb-3" id="file" name="file" multiple accept="image/*"#}
-{#                           required>#}
-{#                    <button type="submit" class="btn btn-primary">上传文件</button>#}
-{#                </form>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#</div>#}
 
 <!-- 上传文件模态框 -->
 <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">

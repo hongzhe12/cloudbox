@@ -3,8 +3,7 @@ from django.core.cache import cache
 
 from .s3client import S3Client
 from .utils import compress_image
-
-REDIS_TIMEOUT = 60 * 60 * 72 # 缓存过期时间，72小时
+from .conf import REDIS_TIMEOUT
 
 '''
 celery -A CloudBox.celery_app worker --loglevel=info
