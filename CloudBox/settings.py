@@ -158,6 +158,8 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERYD_CONCURRENCY = 4      # celery worker并发数
+CELERYD_MAX_TASKS_PER_CHILD = 5   # 每个worker最大执行任务数
 
 # 添加这个配置避免未来的警告
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

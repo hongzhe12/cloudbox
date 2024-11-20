@@ -31,7 +31,7 @@ def upload_file_to_s3(file_name, file_content, access_key, secret_key, bucket_na
     lock_key = f'upload_file_lock_{file_name}'
 
     # 获取缓存锁，超时3秒
-    with cache.lock(lock_key, timeout=3):
+    with cache.lock(lock_key, timeout=30):
         try:
             s3_client = S3Client(access_key, secret_key, bucket_name, end_point)
             compressed_file = compress_image(file_content)
