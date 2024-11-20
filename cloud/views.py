@@ -16,8 +16,6 @@ from .tasks import upload_file_to_s3
 
 from PIL import Image
 import io
-import logging
-logger = logging.getLogger(__name__)  # 获取模块级日志记录器
 
 def compress_image(file, quality=70):
     img = Image.open(file)
@@ -124,17 +122,15 @@ def list_view(request):
     if not config:
         messages.error(request, "S3 配置未设置！")
         return redirect('cloud:configure_s3')  # 配置未设置时跳转到配置页面
-    
+
     # 为当前用户创建唯一的缓存键
     cache_key = f'file_list_{request.user.id}'  # 加入用户 ID 作为缓存键的一部分
-    
     s3_client = S3Client(
         config.access_key,
         config.secret_key,
         config.bucket_name,
         config.end_point
     )
-    
     # 获取文件列表并缓存
     list_files = cache.get(cache_key)
     if list_files is None:
