@@ -29,7 +29,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: cloudbox
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - cloudbox_postgres_data:/var/lib/postgresql/data
 
   celery:
     build:
@@ -43,4 +43,5 @@ services:
       sh -c "celery -A CloudBox.celery_app worker --loglevel=info --concurrency=4"
 
 volumes:
-  postgres_data:
+  cloudbox_postgres_data:
+    name: "cloudbox_postgres_data"
