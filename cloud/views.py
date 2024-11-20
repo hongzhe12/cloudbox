@@ -14,7 +14,13 @@ from django.contrib import messages
 
 from .tasks import upload_file_to_s3
 
-
+def compress_image(file, quality=70):
+    img = Image.open(file)
+    img = img.convert("RGB")  # 转换为 RGB 模式
+    byte_io = io.BytesIO()
+    img.save(byte_io, 'WebP', quality=quality)  # 使用 WebP 格式
+    byte_io.seek(0)
+    return byte_io
 
 import cProfile
 import pstats
