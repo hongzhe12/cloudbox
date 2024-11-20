@@ -106,13 +106,13 @@ def configure_s3_view(request):
 
     return render(request, 'cloud/configure_s3.html', {'form': form})
 
-
-@login_required
+# 去掉异步队列
+@login_required  # 确保用户已登录
 def list_view(request):
-    config = get_s3_config(request)
+    config = get_s3_config(request)  # 使用当前用户的配置
     if not config:
         messages.error(request, "S3 配置未设置！")
-        return redirect('cloud:configure_s3')
+        return redirect('cloud:configure_s3')  # 配置未设置时跳转到配置页面
 
     s3_client = S3Client(
         config.access_key,
@@ -121,35 +121,42 @@ def list_view(request):
         config.end_point
     )
 
+    # 获取文件列表并缓存
     list_files = cache.get('file_list')
     if list_files is None:
         try:
             list_files = s3_client.list_files()
-            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
+            # list_files数据格式：[{'size': file_size, 'url': file_url, 'name': file_key},...]
+            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)  # 缓存文件列表 1 小时
         except Exception as e:
             messages.error(request, f"获取文件列表失败：{e}")
             return redirect('cloud:index')
 
+    # 上传文件后增量更新缓存
     if request.method == 'POST':
         files = request.FILES.getlist('file')
         if not files:
             messages.error(request, "没有文件上传！")
             return redirect('cloud:index')
 
+        # 处理每个文件
         for file in files:
-            # 异步调用 Celery 任务
-            upload_file_to_s3.delay(
-                file_name=file.name,
-                file_content=file.read(),
-                access_key=config.access_key,
-                secret_key=config.secret_key,
-                bucket_name=config.bucket_name,
-                end_point=config.end_point,
-            )
-            messages.success(request, f"文件 '{file.name}' 已提交上传！")
+            # 压缩图片
+            compressed_file = compress_image(file)
+            result = s3_client.put_file(file.name, compressed_file)
+            if result:
+
+                new_file = s3_client.get_file_info_by_name(file.name)
+
+                # 上传成功后更新缓存
+                list_files.append(new_file)
+                cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)  # 60小时缓存
+            else:
+                messages.error(request, f"文件 '{file.name}' 上传失败！")
 
         return redirect('cloud:index')
 
+    # 分页处理
     page = request.GET.get('page', 1)
     paginator = Paginator(list_files, 8)
     try:
@@ -158,8 +165,64 @@ def list_view(request):
         files = paginator.page(1)
     except EmptyPage:
         files = paginator.page(paginator.num_pages)
-    return render(request, 'cloud/index.html', {'files': files})
 
+    return render(request, 'cloud/index.html', {
+        'files': files,
+    })
+    
+# 使用celery队列上传
+# @login_required
+# def list_view(request):
+#     config = get_s3_config(request)
+#     if not config:
+#         messages.error(request, "S3 配置未设置！")
+#         return redirect('cloud:configure_s3')
+
+#     s3_client = S3Client(
+#         config.access_key,
+#         config.secret_key,
+#         config.bucket_name,
+#         config.end_point
+#     )
+
+#     list_files = cache.get('file_list')
+#     if list_files is None:
+#         try:
+#             list_files = s3_client.list_files()
+#             cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
+#         except Exception as e:
+#             messages.error(request, f"获取文件列表失败：{e}")
+#             return redirect('cloud:index')
+
+#     if request.method == 'POST':
+#         files = request.FILES.getlist('file')
+#         if not files:
+#             messages.error(request, "没有文件上传！")
+#             return redirect('cloud:index')
+
+#         for file in files:
+#             # 异步调用 Celery 任务
+#             upload_file_to_s3.delay(
+#                 file_name=file.name,
+#                 file_content=file.read(),
+#                 access_key=config.access_key,
+#                 secret_key=config.secret_key,
+#                 bucket_name=config.bucket_name,
+#                 end_point=config.end_point,
+#             )
+#             messages.success(request, f"文件 '{file.name}' 已提交上传！")
+
+#         return redirect('cloud:index')
+
+#     page = request.GET.get('page', 1)
+#     paginator = Paginator(list_files, 8)
+#     try:
+#         files = paginator.page(page)
+#     except PageNotAnInteger:
+#         files = paginator.page(1)
+#     except EmptyPage:
+#         files = paginator.page(paginator.num_pages)
+#     return render(request, 'cloud/index.html', {'files': files})
 
 @login_required  # 确保用户已登录
 def search(request):
