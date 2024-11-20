@@ -14,6 +14,9 @@ from django.contrib import messages
 
 from .tasks import upload_file_to_s3
 
+from PIL import Image
+import io
+
 def compress_image(file, quality=70):
     img = Image.open(file)
     img = img.convert("RGB")  # 转换为 RGB 模式
