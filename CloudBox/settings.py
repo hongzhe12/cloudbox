@@ -176,6 +176,18 @@ CELERY_BROKER_URL = 'redis://cloudbox-redis:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://cloudbox-redis:6379/0'
+CELERYD_CONCURRENCY = 1      # celery worker并发数
+CELERYD_MAX_TASKS_PER_CHILD = 1   # 每个worker最大执行任务数
+
+# 每个 worker 使用最大内存，单位是字节 (bytes)
+CELERYD_MAX_MEMORY_PER_CHILD = 50000000  # 50 MB
+
+# 控制任务队列的大小和任务执行的最大时间
+CELERY_TASK_TIME_LIMIT = 1  # 设置任务的最大执行时间为 1 分钟
+CELERY_TASK_ACKS_LATE = True  # 确保任务在成功执行后才会确认
+
+
+
 
 # 添加这个配置避免未来的警告
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

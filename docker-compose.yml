@@ -40,7 +40,8 @@ services:
       - redis
       - db
     command: >
-      sh -c "celery -A CloudBox.celery_app worker --loglevel=info --concurrency=4"
+      sh -c "celery -A CloudBox.celery_app worker --loglevel=info"
+    mem_limit: 256m
 
 volumes:
   cloudbox_postgres_data:

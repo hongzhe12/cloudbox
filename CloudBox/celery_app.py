@@ -14,4 +14,6 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
 # 设置 worker_pool 为 solo 模式
-app.conf.worker_pool = 'solo'
+# app.conf.worker_pool = 'solo' # 测试环境（只能处理一个任务）
+
+app.conf.worker_pool = 'prefork' # 默认并发模式

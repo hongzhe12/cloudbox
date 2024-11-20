@@ -87,3 +87,9 @@ python manage.py clearsessions
 celery -A CloudBox control cancel_consumer
 ```
 以确保浏览器和服务器端的缓存都得到清理，解决加载旧数据或静态文件缓存问题。
+
+
+# 查看容器完整的command
+```bash
+docker inspect --format '{{json .Config.Cmd}}' cloudbox-celery
+```
