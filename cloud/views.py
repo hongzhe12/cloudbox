@@ -16,6 +16,8 @@ from .tasks import upload_file_to_s3
 
 from PIL import Image
 import io
+import logging
+logger = logging.getLogger(__name__)  # 获取模块级日志记录器
 
 def compress_image(file, quality=70):
     img = Image.open(file)
@@ -109,7 +111,6 @@ def configure_s3_view(request):
         # GET 请求时，检查是否已有配置数据
         config = get_s3_config(request)
         if config:
-            print("当前配置：", config)
             form = S3ConfigForm(instance=config)
         else:
             form = S3ConfigForm()
@@ -123,16 +124,19 @@ def list_view(request):
     if not config:
         messages.error(request, "S3 配置未设置！")
         return redirect('cloud:configure_s3')  # 配置未设置时跳转到配置页面
-
+    
+    # 为当前用户创建唯一的缓存键
+    cache_key = f'file_list_{request.user.id}'  # 加入用户 ID 作为缓存键的一部分
+    
     s3_client = S3Client(
         config.access_key,
         config.secret_key,
         config.bucket_name,
         config.end_point
     )
-
+    
     # 获取文件列表并缓存
-    list_files = cache.get('file_list')
+    list_files = cache.get(cache_key)
     if list_files is None:
         try:
             list_files = s3_client.list_files()
@@ -195,7 +199,7 @@ def list_view(request):
 #         config.end_point
 #     )
 
-#     list_files = cache.get('file_list')
+#     list_files = cache.get(cache_key)
 #     if list_files is None:
 #         try:
 #             list_files = s3_client.list_files()
@@ -268,7 +272,10 @@ def delete_file_view(request):
     if not config:
         messages.error(request, "S3 配置未设置！")
         return redirect('cloud:configure_s3')  # 配置未设置时跳转到配置页面
-
+    
+    # 为当前用户创建唯一的缓存键
+    cache_key = f'file_list_{request.user.id}'  # 加入用户 ID 作为缓存键的一部分
+    
     s3_client = S3Client(
         config.access_key,
         config.secret_key,
@@ -281,7 +288,7 @@ def delete_file_view(request):
 
     if result:
         # 删除成功后从缓存中移除该文件
-        list_files = cache.get('file_list')
+        list_files = cache.get(cache_key)
         if list_files:
             list_files = [f for f in list_files if f['name'] != file_name]
             cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
