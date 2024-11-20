@@ -109,6 +109,7 @@ def configure_s3_view(request):
         # GET 请求时，检查是否已有配置数据
         config = get_s3_config(request)
         if config:
+            print("当前配置：", config)
             form = S3ConfigForm(instance=config)
         else:
             form = S3ConfigForm()
