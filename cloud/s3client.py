@@ -3,7 +3,7 @@ import functools
 
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from .conf import REDIS_TIMEOUT
-
+from datetime import datetime, timedelta
 
 def catch_exceptions_decorator(func):
     @functools.wraps(func)
@@ -326,34 +326,40 @@ class S3Client:
 
         return file_items
     
-    def get_bucket_storage_usage(self,bucket_name):
+    def get_bucket_storage_size(bucket_name, region_name='us-east-1'):
         """
-        查询桶的存储使用情况，计算所有文件的总大小。
+        获取指定 S3 桶的存储空间大小（以 GB 为单位）
         
-        :return: 存储使用情况字典，包含 'total_size' (总大小，单位为 KB)
+        :param bucket_name: S3 桶名称
+        :param region_name: 桶所在区域
+        :return: 存储空间大小（单位 GB）
         """
-        s3 = self.s3
+        # 初始化 CloudWatch 客户端
+        cloudwatch = boto3.client('cloudwatch', region_name=region_name)
 
-        total_size = 0  # 初始化总大小
-        try:
-            # 列出桶中的所有对象
-            response = s3.list_objects_v2(Bucket=bucket_name)
+        # 获取桶的存储大小指标
+        response = cloudwatch.get_metric_statistics(
+            Namespace='AWS/S3',
+            MetricName='BucketSizeBytes',
+            Dimensions=[
+                {'Name': 'BucketName', 'Value': bucket_name},
+                {'Name': 'StorageType', 'Value': 'StandardStorage'}
+            ],
+            StartTime=datetime.utcnow() - timedelta(days=1),  # 查询过去一天的存储数据
+            EndTime=datetime.utcnow(),
+            Period=86400,  # 每天一次
+            Statistics=['Average'],  # 获取平均值
+        )
 
-            # 遍历桶中的所有对象并累加大小
-            if 'Contents' in response:
-                for obj in response['Contents']:
-                    total_size += obj['Size']  # 累加每个文件的大小
+        # 提取存储大小数据
+        datapoints = response.get('Datapoints', [])
+        if datapoints:
+            # 存储空间单位：字节，转换为 GB
+            size_bytes = datapoints[0]['Average']
+            size_gb = size_bytes / (1024 ** 3)
+            return size_gb
 
-            # 返回总存储使用情况（单位为 KB）
-            total_size_kb = total_size // 1024  # 转换为 KB
-            return {
-                'total_size': total_size_kb  # 返回存储使用情况
-            }
-
-        except Exception as e:
-            print(f"Failed to fetch storage usage for bucket {bucket_name}: {str(e)}")
-            return None
-
+        return None
 
 
 def test_s3client():
