@@ -76,7 +76,7 @@ def api_search_files(request):
         return Response({"detail": "请输入搜索关键字！"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        list_files = s3_client.search_file(keyword)
+        list_files = s3_client.search_file(keyword,config.bucket_name)
         return Response(list_files)
     except Exception as e:
         return Response({"detail": f"搜索失败：{e}"}, status=status.HTTP_400_BAD_REQUEST)
