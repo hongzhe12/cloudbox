@@ -319,8 +319,9 @@ def search(request):
 
 @login_required  # 确保用户已登录
 def delete_file_view(request):
-    # 权限校验
-    if not has_privileges(request.user,['管理员']):
+    if request.method == 'POST':
+        # 权限校验
+        if not has_privileges(request.user,['管理员']):
             # 使用 SweetAlert2 显示上传成功提示
             return JsonResponse({
                 "icon": "warning",
