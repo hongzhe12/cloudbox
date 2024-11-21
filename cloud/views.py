@@ -7,11 +7,11 @@ from .s3client import S3Client
 from django.core.cache import cache
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
-
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .tasks import upload_file_to_s3
-
+import pysnooper
 from PIL import Image
 import io
 
@@ -27,6 +27,21 @@ import cProfile
 import pstats
 from functools import wraps
 from io import StringIO
+
+
+def has_privileges(user, required_groups):
+    """
+    检查用户是否属于指定的权限组。
+
+    :param user: 当前用户对象
+    :param required_groups: 权限组名称的字符串列表
+    :return: 如果用户属于至少一个指定的权限组，返回 True，否则返回 False
+    """
+    user_groups = user.groups.all()  # 获取用户所属的所有权限分组
+    for group in user_groups:
+        if group.name in required_groups:
+            return True  # 用户属于至少一个指定的权限组
+    return False  # 用户不属于任何指定的权限组
 
 
 def profile_view(func):
@@ -159,10 +174,23 @@ def list_view(request):
 
     # 上传文件后增量更新缓存
     if request.method == 'POST':
+        if not has_privileges(request.user,['管理员']):
+            # 使用 SweetAlert2 显示上传成功提示
+            return JsonResponse({
+                "icon": "warning",
+                "title": "没有权限",
+                "text": "您没有权限执行此操作。",
+                "confirmButtonText": "确定"
+            })
+        
         files = request.FILES.getlist('file')
         if not files:
-            messages.error(request, "没有文件上传！")
-            return redirect('cloud:index')
+            return JsonResponse({
+                "icon": "error",
+                "title": "文件上传失败",
+                "text": "请选择文件！",
+                "confirmButtonText": "重试"
+            })
 
         # 处理每个文件
         for file in files:
@@ -177,9 +205,20 @@ def list_view(request):
                 list_files.append(new_file)
                 cache.set(cache_key, list_files, timeout=REDIS_TIMEOUT)  # 更新当前用户的缓存
             else:
-                messages.error(request, f"文件 '{file.name}' 上传失败！")
+                return JsonResponse({
+                    "icon": "error",
+                    "title": "文件上传失败",
+                    "text": f"上传过程中出现错误：{str(e)}",
+                    "confirmButtonText": "重试"
+                })
 
-        return redirect('cloud:index')
+        # return redirect('cloud:index')
+        return JsonResponse({
+            "icon": "success",
+            "title": "文件上传成功！",
+            "text": "恭喜，您的文件已成功上传。",
+            "confirmButtonText": "确定"
+        })
 
     # 分页处理
     page = request.GET.get('page', 1)
@@ -269,6 +308,7 @@ def search(request):
         return redirect('cloud:index')
 
     try:
+        print(f"bucket_name is {config.bucket_name}")
         list_files = s3_client.search_file(keyword,config.bucket_name)
     except Exception as e:
         messages.error(request, f"搜索失败：{e}")
@@ -279,6 +319,16 @@ def search(request):
 
 @login_required  # 确保用户已登录
 def delete_file_view(request):
+    # 权限校验
+    if not has_privileges(request.user,['管理员']):
+            # 使用 SweetAlert2 显示上传成功提示
+            return JsonResponse({
+                "icon": "warning",
+                "title": "没有权限",
+                "text": "您没有权限执行此操作。",
+                "confirmButtonText": "确定"
+            })
+            
     config = get_s3_config(request)  # 使用当前用户的配置
     if not config:
         messages.error(request, "S3 配置未设置！")
