@@ -297,7 +297,7 @@ class S3Client:
             return None
 
     # 搜索文件
-    def search_file(self, keyword):
+    def search_file(self, keyword,bucket_name):
         """
         Search for a file in the specified S3 bucket by keyword.
 
@@ -306,7 +306,7 @@ class S3Client:
         :return: List of file items that match the keyword
         """
         s3 = self.s3
-        bucket_name = self.bucket_name
+        # bucket_name = self.bucket_name
 
         file_items = []
         response = s3.list_objects_v2(Bucket=bucket_name)
@@ -325,6 +325,35 @@ class S3Client:
             print("The bucket is empty or does not exist.")
 
         return file_items
+    
+    def get_bucket_storage_usage(self,bucket_name):
+        """
+        查询桶的存储使用情况，计算所有文件的总大小。
+        
+        :return: 存储使用情况字典，包含 'total_size' (总大小，单位为 KB)
+        """
+        s3 = self.s3
+
+        total_size = 0  # 初始化总大小
+        try:
+            # 列出桶中的所有对象
+            response = s3.list_objects_v2(Bucket=bucket_name)
+
+            # 遍历桶中的所有对象并累加大小
+            if 'Contents' in response:
+                for obj in response['Contents']:
+                    total_size += obj['Size']  # 累加每个文件的大小
+
+            # 返回总存储使用情况（单位为 KB）
+            total_size_kb = total_size // 1024  # 转换为 KB
+            return {
+                'total_size': total_size_kb  # 返回存储使用情况
+            }
+
+        except Exception as e:
+            print(f"Failed to fetch storage usage for bucket {bucket_name}: {str(e)}")
+            return None
+
 
 
 def test_s3client():

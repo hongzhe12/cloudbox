@@ -269,7 +269,7 @@ def search(request):
         return redirect('cloud:index')
 
     try:
-        list_files = s3_client.search_file(keyword)
+        list_files = s3_client.search_file(keyword,config.bucket_name)
     except Exception as e:
         messages.error(request, f"搜索失败：{e}")
         return redirect('cloud:index')
