@@ -57,7 +57,7 @@ def api_list_files(request):
     list_files = cache.get('file_list')
     if list_files is None:
         try:
-            list_files = s3_client.list_files()
+            list_files = s3_client.list_files(config.bucket_name)
             cache.set('file_list', list_files, timeout=300)
         except Exception as e:
             return Response({"detail": f"获取文件列表失败：{e}"}, status=status.HTTP_400_BAD_REQUEST)

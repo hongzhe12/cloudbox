@@ -1,17 +1,15 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-
+from django.contrib.auth.forms import AuthenticationForm
 from .conf import REDIS_TIMEOUT
 from .forms import S3ConfigForm
 from .models import S3Config
 from .s3client import S3Client
 from django.core.cache import cache
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
 from django.contrib import messages
-
 from .tasks import upload_file_to_s3
 
 from PIL import Image
@@ -62,25 +60,41 @@ def profile_view(func):
     return wrapper
 
 
+
+
 def user_login(request):
-    # 如果用户已经登录，跳转到主页
-    if request.user.is_authenticated:
-        return redirect('cloud:index')
-
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
-        # 尝试认证用户
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            # AuthenticationForm 自带用户验证
+            user = form.get_user()
             login(request, user)
-
             return redirect("cloud:index")  # 登录成功后跳转到指定页面
         else:
-            messages.error(request, '用户名或密码错误')
+            messages.error(request, 'Invalid credentials.')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'cloud/login.html', {'form': form})
 
-    return render(request, 'cloud/login.html')  # 渲染登录页面
+# def user_login(request):
+#     # 如果用户已经登录，跳转到主页
+#     if request.user.is_authenticated:
+#         return redirect('cloud:index')
+
+#     if request.method == 'POST':
+#         username = request.POST.get('username')
+#         password = request.POST.get('password')
+
+#         # 尝试认证用户
+#         user = authenticate(request, username=username, password=password)
+#         if user is not None:
+#             login(request, user)
+
+#             return redirect("cloud:index")  # 登录成功后跳转到指定页面
+#         else:
+#             messages.error(request, '用户名或密码错误')
+
+#     return render(request, 'cloud/login.html')  # 渲染登录页面
 
 # 用户登出
 def user_logout(request):
@@ -125,6 +139,7 @@ def list_view(request):
 
     # 为当前用户创建唯一的缓存键
     cache_key = f'file_list_{request.user.id}'  # 加入用户 ID 作为缓存键的一部分
+    print(f'读取缓存:{cache_key}')
     s3_client = S3Client(
         config.access_key,
         config.secret_key,
@@ -135,9 +150,9 @@ def list_view(request):
     list_files = cache.get(cache_key)
     if list_files is None:
         try:
-            list_files = s3_client.list_files()
+            list_files = s3_client.list_files(config.bucket_name)
             # list_files数据格式：[{'size': file_size, 'url': file_url, 'name': file_key},...]
-            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)  # 缓存文件列表 1 小时
+            cache.set(cache_key, list_files, timeout=REDIS_TIMEOUT)  # 缓存文件列表
         except Exception as e:
             messages.error(request, f"获取文件列表失败：{e}")
             return redirect('cloud:index')
@@ -160,7 +175,7 @@ def list_view(request):
 
                 # 上传成功后更新缓存
                 list_files.append(new_file)
-                cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)  # 60小时缓存
+                cache.set(cache_key, list_files, timeout=REDIS_TIMEOUT)  # 更新当前用户的缓存
             else:
                 messages.error(request, f"文件 '{file.name}' 上传失败！")
 
@@ -287,7 +302,7 @@ def delete_file_view(request):
         list_files = cache.get(cache_key)
         if list_files:
             list_files = [f for f in list_files if f['name'] != file_name]
-            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
+            cache.set(cache_key, list_files, timeout=REDIS_TIMEOUT)
 
     else:
         messages.error(request, f"删除文件 '{file_name}' 失败！")

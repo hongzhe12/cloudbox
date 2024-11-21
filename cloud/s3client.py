@@ -156,11 +156,12 @@ class S3Client:
             f.write(response['Body'].read())
         print(f"File '{filename}' has been downloaded and saved as '{local_filename}'.")
 
-    def list_files(self) -> list:
+    def list_files(self,bucket_name) -> list:
         """List all files in the specified S3 bucket."""
-        print("获取文件列表...")
+
         s3 = self.s3
-        bucket_name = self.bucket_name
+        # if bucket_name is None:
+        #     bucket_name = self.bucket_name
 
         file_items = []
         response = s3.list_objects_v2(Bucket=bucket_name)

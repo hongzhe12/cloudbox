@@ -31,7 +31,6 @@ ALLOWED_HOSTS = ["*"]
 INSTALLED_APPS = [
     'django_celery_results',  # celery结果
     'django_celery_beat',  # celery定时任务
-    # 'corsheaders',
     'drf_yasg',
     'rest_framework',
     'cloud.apps.CloudConfig',
@@ -46,7 +45,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
