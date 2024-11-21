@@ -213,7 +213,7 @@ def list_view(request):
 #     list_files = cache.get(cache_key)
 #     if list_files is None:
 #         try:
-#             list_files = s3_client.list_files()
+#             list_files = s3_client.list_files(config.bucket_name)
 #             cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
 #         except Exception as e:
 #             messages.error(request, f"获取文件列表失败：{e}")
