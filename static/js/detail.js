@@ -37,10 +37,10 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.querySelector('#modalFileStorage').textContent = fileStorage;
 
         // 仅显示文件名，不显示 URL
-        var fileUrlLink = modal.querySelector('#modalFileUrl');
-        fileUrlLink.textContent = '点击下载'; // 显示下载按钮文本
-        fileUrlLink.href = '/download/file/' + encodeURIComponent(fileName); // 后端提供下载接口
-        fileUrlLink.title = '点击下载文件'; // 添加工具提示
+        // var fileUrlLink = modal.querySelector('#modalFileUrl');
+        // fileUrlLink.textContent = '点击下载'; // 显示下载按钮文本
+        // fileUrlLink.href = '/download/file/' + encodeURIComponent(fileName); // 后端提供下载接口
+        // fileUrlLink.title = '点击下载文件'; // 添加工具提示
 
         console.log('Modal content updated.');
     });
