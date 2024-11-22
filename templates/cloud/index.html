@@ -148,11 +148,19 @@
                         </button>
 
                         <!-- 删除表单 -->
-                        <form action="{% url 'cloud:delete_file' %}" method="post" class="d-inline">
+                        <!-- <form action="{% url 'cloud:delete_file' %}" method="post" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="file_name" value="{{ file.name }}">
-                            <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                            <button type="submit" class="btn btn-danger btn-sm" >删除</button>
+                        </form> -->
+
+                        <!-- 删除表单 -->
+                        <form action="{% url 'cloud:delete_file' %}" method="post" class="d-inline delete-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="file_name" value="{{ file.name }}">
+                            <button type="submit" class="btn btn-danger btn-sm delete-button">删除</button>
                         </form>
+
                     </div>
                 </div>
             </div>
@@ -237,7 +245,6 @@
 <script src="{% static 'js/detail.js' %}"></script>
 <!-- 引入 Bootstrap JavaScript -->
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
-
 
 </body>
 </html>

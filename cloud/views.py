@@ -1,25 +1,47 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-
+from django.contrib.auth.forms import AuthenticationForm
 from .conf import REDIS_TIMEOUT
 from .forms import S3ConfigForm
 from .models import S3Config
 from .s3client import S3Client
 from django.core.cache import cache
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render
-
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
 from django.contrib import messages
-
 from .tasks import upload_file_to_s3
+import pysnooper
+from PIL import Image
+import io
 
-
+def compress_image(file, quality=70):
+    img = Image.open(file)
+    img = img.convert("RGB")  # 转换为 RGB 模式
+    byte_io = io.BytesIO()
+    img.save(byte_io, 'WebP', quality=quality)  # 使用 WebP 格式
+    byte_io.seek(0)
+    return byte_io
 
 import cProfile
 import pstats
 from functools import wraps
 from io import StringIO
+
+
+def has_privileges(user, required_groups):
+    """
+    检查用户是否属于指定的权限组。
+
+    :param user: 当前用户对象
+    :param required_groups: 权限组名称的字符串列表
+    :return: 如果用户属于至少一个指定的权限组，返回 True，否则返回 False
+    """
+    user_groups = user.groups.all()  # 获取用户所属的所有权限分组
+    for group in user_groups:
+        if group.name in required_groups:
+            return True  # 用户属于至少一个指定的权限组
+    return False  # 用户不属于任何指定的权限组
 
 
 def profile_view(func):
@@ -53,25 +75,41 @@ def profile_view(func):
     return wrapper
 
 
+
+
 def user_login(request):
-    # 如果用户已经登录，跳转到主页
-    if request.user.is_authenticated:
-        return redirect('cloud:index')
-
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
-        # 尝试认证用户
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            # AuthenticationForm 自带用户验证
+            user = form.get_user()
             login(request, user)
-
             return redirect("cloud:index")  # 登录成功后跳转到指定页面
         else:
-            messages.error(request, '用户名或密码错误')
+            messages.error(request, 'Invalid credentials.')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'cloud/login.html', {'form': form})
 
-    return render(request, 'cloud/login.html')  # 渲染登录页面
+# def user_login(request):
+#     # 如果用户已经登录，跳转到主页
+#     if request.user.is_authenticated:
+#         return redirect('cloud:index')
+
+#     if request.method == 'POST':
+#         username = request.POST.get('username')
+#         password = request.POST.get('password')
+
+#         # 尝试认证用户
+#         user = authenticate(request, username=username, password=password)
+#         if user is not None:
+#             login(request, user)
+
+#             return redirect("cloud:index")  # 登录成功后跳转到指定页面
+#         else:
+#             messages.error(request, '用户名或密码错误')
+
+#     return render(request, 'cloud/login.html')  # 渲染登录页面
 
 # 用户登出
 def user_logout(request):
@@ -106,50 +144,83 @@ def configure_s3_view(request):
 
     return render(request, 'cloud/configure_s3.html', {'form': form})
 
-
-@login_required
+# 去掉异步队列
+@login_required  # 确保用户已登录
 def list_view(request):
-    config = get_s3_config(request)
+    config = get_s3_config(request)  # 使用当前用户的配置
     if not config:
         messages.error(request, "S3 配置未设置！")
-        return redirect('cloud:configure_s3')
+        return redirect('cloud:configure_s3')  # 配置未设置时跳转到配置页面
 
+    # 为当前用户创建唯一的缓存键
+    cache_key = f'file_list_{request.user.id}'  # 加入用户 ID 作为缓存键的一部分
+    print(f'读取缓存:{cache_key}')
     s3_client = S3Client(
         config.access_key,
         config.secret_key,
         config.bucket_name,
         config.end_point
     )
-
-    list_files = cache.get('file_list')
+    # 获取文件列表并缓存
+    list_files = cache.get(cache_key)
     if list_files is None:
         try:
-            list_files = s3_client.list_files()
-            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
+            list_files = s3_client.list_files(config.bucket_name)
+            # list_files数据格式：[{'size': file_size, 'url': file_url, 'name': file_key},...]
+            cache.set(cache_key, list_files, timeout=REDIS_TIMEOUT)  # 缓存文件列表
         except Exception as e:
             messages.error(request, f"获取文件列表失败：{e}")
             return redirect('cloud:index')
 
+    # 上传文件后增量更新缓存
     if request.method == 'POST':
+        if not has_privileges(request.user,['管理员']):
+            # 使用 SweetAlert2 显示上传成功提示
+            return JsonResponse({
+                "icon": "warning",
+                "title": "没有权限",
+                "text": "您没有权限执行此操作。",
+                "confirmButtonText": "确定"
+            })
+
         files = request.FILES.getlist('file')
         if not files:
-            messages.error(request, "没有文件上传！")
-            return redirect('cloud:index')
+            return JsonResponse({
+                "icon": "error",
+                "title": "文件上传失败",
+                "text": "请选择文件！",
+                "confirmButtonText": "重试"
+            })
 
+        # 处理每个文件
         for file in files:
-            # 异步调用 Celery 任务
-            upload_file_to_s3.delay(
-                file_name=file.name,
-                file_content=file.read(),
-                access_key=config.access_key,
-                secret_key=config.secret_key,
-                bucket_name=config.bucket_name,
-                end_point=config.end_point,
-            )
-            messages.success(request, f"文件 '{file.name}' 已提交上传！")
+            # 压缩图片
+            compressed_file = compress_image(file)
+            result = s3_client.put_file(file.name, compressed_file)
+            if result:
 
-        return redirect('cloud:index')
+                new_file = s3_client.get_file_info_by_name(file.name)
 
+                # 上传成功后更新缓存
+                list_files.append(new_file)
+                cache.set(cache_key, list_files, timeout=REDIS_TIMEOUT)  # 更新当前用户的缓存
+            else:
+                return JsonResponse({
+                    "icon": "error",
+                    "title": "文件上传失败",
+                    "text": "上传过程中出现错误！",
+                    "confirmButtonText": "重试"
+                })
+
+        # return redirect('cloud:index')
+        return JsonResponse({
+            "icon": "success",
+            "title": "文件上传成功！",
+            "text": "恭喜，您的文件已成功上传。",
+            "confirmButtonText": "确定"
+        })
+
+    # 分页处理
     page = request.GET.get('page', 1)
     paginator = Paginator(list_files, 8)
     try:
@@ -158,8 +229,64 @@ def list_view(request):
         files = paginator.page(1)
     except EmptyPage:
         files = paginator.page(paginator.num_pages)
-    return render(request, 'cloud/index.html', {'files': files})
 
+    return render(request, 'cloud/index.html', {
+        'files': files,
+    })
+
+# 使用celery队列上传
+# @login_required
+# def list_view(request):
+#     config = get_s3_config(request)
+#     if not config:
+#         messages.error(request, "S3 配置未设置！")
+#         return redirect('cloud:configure_s3')
+
+#     s3_client = S3Client(
+#         config.access_key,
+#         config.secret_key,
+#         config.bucket_name,
+#         config.end_point
+#     )
+
+#     list_files = cache.get(cache_key)
+#     if list_files is None:
+#         try:
+#             list_files = s3_client.list_files(config.bucket_name)
+#             cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
+#         except Exception as e:
+#             messages.error(request, f"获取文件列表失败：{e}")
+#             return redirect('cloud:index')
+
+#     if request.method == 'POST':
+#         files = request.FILES.getlist('file')
+#         if not files:
+#             messages.error(request, "没有文件上传！")
+#             return redirect('cloud:index')
+
+#         for file in files:
+#             # 异步调用 Celery 任务
+#             upload_file_to_s3.delay(
+#                 file_name=file.name,
+#                 file_content=file.read(),
+#                 access_key=config.access_key,
+#                 secret_key=config.secret_key,
+#                 bucket_name=config.bucket_name,
+#                 end_point=config.end_point,
+#             )
+#             messages.success(request, f"文件 '{file.name}' 已提交上传！")
+
+#         return redirect('cloud:index')
+
+#     page = request.GET.get('page', 1)
+#     paginator = Paginator(list_files, 8)
+#     try:
+#         files = paginator.page(page)
+#     except PageNotAnInteger:
+#         files = paginator.page(1)
+#     except EmptyPage:
+#         files = paginator.page(paginator.num_pages)
+#     return render(request, 'cloud/index.html', {'files': files})
 
 @login_required  # 确保用户已登录
 def search(request):
@@ -181,7 +308,8 @@ def search(request):
         return redirect('cloud:index')
 
     try:
-        list_files = s3_client.search_file(keyword)
+        print(f"bucket_name is {config.bucket_name}")
+        list_files = s3_client.search_file(keyword,config.bucket_name)
     except Exception as e:
         messages.error(request, f"搜索失败：{e}")
         return redirect('cloud:index')
@@ -191,10 +319,24 @@ def search(request):
 
 @login_required  # 确保用户已登录
 def delete_file_view(request):
+    if request.method == 'POST':
+        # 权限校验
+        if not has_privileges(request.user,['管理员']):
+            # 使用 SweetAlert2 显示上传成功提示
+            return JsonResponse({
+                "icon": "warning",
+                "title": "没有权限",
+                "text": "您没有权限执行此操作。",
+                "confirmButtonText": "确定"
+            })
+
     config = get_s3_config(request)  # 使用当前用户的配置
     if not config:
         messages.error(request, "S3 配置未设置！")
         return redirect('cloud:configure_s3')  # 配置未设置时跳转到配置页面
+
+    # 为当前用户创建唯一的缓存键
+    cache_key = f'file_list_{request.user.id}'  # 加入用户 ID 作为缓存键的一部分
 
     s3_client = S3Client(
         config.access_key,
@@ -208,12 +350,22 @@ def delete_file_view(request):
 
     if result:
         # 删除成功后从缓存中移除该文件
-        list_files = cache.get('file_list')
+        list_files = cache.get(cache_key)
         if list_files:
             list_files = [f for f in list_files if f['name'] != file_name]
-            cache.set('file_list', list_files, timeout=REDIS_TIMEOUT)
+            cache.set(cache_key, list_files, timeout=REDIS_TIMEOUT)
 
     else:
-        messages.error(request, f"删除文件 '{file_name}' 失败！")
+        return JsonResponse({
+                    "icon": "error",
+                    "title": "文件删除失败",
+                    "text": "删除过程中出现错误！",
+                    "confirmButtonText": "重试"
+                })
 
-    return redirect('cloud:index')
+    return JsonResponse({
+            "icon": "success",
+            "title": "文件删除成功！",
+            "text": "恭喜，您的文件已成功删除。",
+            "confirmButtonText": "确定"
+        })

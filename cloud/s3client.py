@@ -3,7 +3,7 @@ import functools
 
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from .conf import REDIS_TIMEOUT
-
+from datetime import datetime, timedelta
 
 def catch_exceptions_decorator(func):
     @functools.wraps(func)
@@ -156,11 +156,12 @@ class S3Client:
             f.write(response['Body'].read())
         print(f"File '{filename}' has been downloaded and saved as '{local_filename}'.")
 
-    def list_files(self) -> list:
+    def list_files(self,bucket_name) -> list:
         """List all files in the specified S3 bucket."""
-        print("获取文件列表...")
+
         s3 = self.s3
-        bucket_name = self.bucket_name
+        # if bucket_name is None:
+        #     bucket_name = self.bucket_name
 
         file_items = []
         response = s3.list_objects_v2(Bucket=bucket_name)
@@ -296,7 +297,7 @@ class S3Client:
             return None
 
     # 搜索文件
-    def search_file(self, keyword):
+    def search_file(self, keyword,bucket_name):
         """
         Search for a file in the specified S3 bucket by keyword.
 
@@ -305,7 +306,7 @@ class S3Client:
         :return: List of file items that match the keyword
         """
         s3 = self.s3
-        bucket_name = self.bucket_name
+        # bucket_name = self.bucket_name
 
         file_items = []
         response = s3.list_objects_v2(Bucket=bucket_name)
@@ -324,6 +325,41 @@ class S3Client:
             print("The bucket is empty or does not exist.")
 
         return file_items
+
+    def get_bucket_storage_size(bucket_name, region_name='us-east-1'):
+        """
+        获取指定 S3 桶的存储空间大小（以 GB 为单位）
+
+        :param bucket_name: S3 桶名称
+        :param region_name: 桶所在区域
+        :return: 存储空间大小（单位 GB）
+        """
+        # 初始化 CloudWatch 客户端
+        cloudwatch = boto3.client('cloudwatch', region_name=region_name)
+
+        # 获取桶的存储大小指标
+        response = cloudwatch.get_metric_statistics(
+            Namespace='AWS/S3',
+            MetricName='BucketSizeBytes',
+            Dimensions=[
+                {'Name': 'BucketName', 'Value': bucket_name},
+                {'Name': 'StorageType', 'Value': 'StandardStorage'}
+            ],
+            StartTime=datetime.utcnow() - timedelta(days=1),  # 查询过去一天的存储数据
+            EndTime=datetime.utcnow(),
+            Period=86400,  # 每天一次
+            Statistics=['Average'],  # 获取平均值
+        )
+
+        # 提取存储大小数据
+        datapoints = response.get('Datapoints', [])
+        if datapoints:
+            # 存储空间单位：字节，转换为 GB
+            size_bytes = datapoints[0]['Average']
+            size_gb = size_bytes / (1024 ** 3)
+            return size_gb
+
+        return None
 
 
 def test_s3client():
