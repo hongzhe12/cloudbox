@@ -208,7 +208,7 @@ def list_view(request):
                 return JsonResponse({
                     "icon": "error",
                     "title": "文件上传失败",
-                    "text": f"上传过程中出现错误：{str(e)}",
+                    "text": "上传过程中出现错误！",
                     "confirmButtonText": "重试"
                 })
 
@@ -319,8 +319,9 @@ def search(request):
 
 @login_required  # 确保用户已登录
 def delete_file_view(request):
-    # 权限校验
-    if not has_privileges(request.user,['管理员']):
+    if request.method == 'POST':
+        # 权限校验
+        if not has_privileges(request.user,['管理员']):
             # 使用 SweetAlert2 显示上传成功提示
             return JsonResponse({
                 "icon": "warning",
@@ -355,6 +356,16 @@ def delete_file_view(request):
             cache.set(cache_key, list_files, timeout=REDIS_TIMEOUT)
 
     else:
-        messages.error(request, f"删除文件 '{file_name}' 失败！")
+        return JsonResponse({
+                    "icon": "error",
+                    "title": "文件删除失败",
+                    "text": "删除过程中出现错误！",
+                    "confirmButtonText": "重试"
+                })
 
-    return redirect('cloud:index')
+    return JsonResponse({
+            "icon": "success",
+            "title": "文件删除成功！",
+            "text": "恭喜，您的文件已成功删除。",
+            "confirmButtonText": "确定"
+        })
