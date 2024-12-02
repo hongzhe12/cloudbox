@@ -48,38 +48,20 @@ cd cloudbox
 pip install -r requirements.txt  
 ```  
 
-### 3. 配置环境变量  
-在项目根目录创建 `.env` 文件，并配置以下变量：  
-```env  
-SECRET_KEY=your_django_secret_key  
-DEBUG=True  
-AWS_ACCESS_KEY=your_aws_access_key  
-AWS_SECRET_KEY=your_aws_secret_key  
-AWS_BUCKET_NAME=your_s3_bucket_name  
-AWS_ENDPOINT_URL=your_s3_endpoint_url  # 如果使用兼容的 S3 服务  
-```  
+### 3. 数据库迁移
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
 
-### 4. 配置 Redis  
-确保 Redis 服务运行，并在 `settings.py` 中配置 Redis 缓存：  
-```python  
-CACHES = {  
-    'default': {  
-        'BACKEND': 'django_redis.cache.RedisCache',  
-        'LOCATION': 'redis://127.0.0.1:6379/1',  
-        'OPTIONS': {  
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',  
-        }  
-    }  
-}  
-```  
 
-### 5. 启动 Celery  
+### 4. 启动 Celery（可选）
 运行以下命令启动 Celery worker：  
 ```bash  
 celery -A cloudbox worker --loglevel=info  
 ```  
 
-### 6. 启动开发服务器  
+### 5. 启动开发服务器
 ```bash  
 python manage.py runserver  
 ```  
@@ -127,5 +109,3 @@ cloudbox/
 欢迎对 CloudBox 提交建议或贡献代码！请在提交 PR 前阅读项目的贡献指南。  
 
 ---  
-
-希望这份 README 满足你的需求！如果有其他补充或改动，请告诉我！

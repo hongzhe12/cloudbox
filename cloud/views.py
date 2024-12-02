@@ -148,6 +148,7 @@ def configure_s3_view(request):
 @login_required  # 确保用户已登录
 def list_view(request):
     config = get_s3_config(request)  # 使用当前用户的配置
+    print(f"S3 配置: {config}")  # 输出配置，查看是否返回 None
     if not config:
         messages.error(request, "S3 配置未设置！")
         return redirect('cloud:configure_s3')  # 配置未设置时跳转到配置页面
