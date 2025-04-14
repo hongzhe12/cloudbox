@@ -42,6 +42,29 @@ services:
     command: >
       sh -c "celery -A CloudBox.celery_app worker --loglevel=info"
     mem_limit: 256m
+  
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    volumes:
+      - "./minio/data:/data"
+      - "./minio/minio:/minio"
+      - "./minio/config:/root/.minio"
+    environment:
+      TZ: Asia/Shanghai
+      LANG: en_US.UTF-8
+      MINIO_PROMETHEUS_AUTH_TYPE: "public"
+      MINIO_ACCESS_KEY: "hongzhe123"
+      MINIO_SECRET_KEY: "hongzhe123"
+    command: server /data --console-address ":9010"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+    ports:
+      - "9010:9010"
+      - "9000:9000"
 
 volumes:
   cloudbox_postgres_data:
