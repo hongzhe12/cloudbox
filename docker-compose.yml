@@ -42,6 +42,8 @@ services:
     command: >
       sh -c "celery -A CloudBox.celery_app worker --loglevel=info"
     mem_limit: 256m
+
+
   
   minio:
     image: minio/minio:latest
